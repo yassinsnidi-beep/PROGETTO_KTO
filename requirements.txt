@@ -9,3 +9,4 @@ scikit-learn
 langchain
 langchain-openai
 sentence-transformers
+Flask

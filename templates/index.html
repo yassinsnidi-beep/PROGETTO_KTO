@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="it" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patent Scouting Service</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+    <style>
+        :root {
+            --pico-font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            --pico-primary: #007bff;
+            --pico-primary-hover: #0056b3;
+        }
+        body {
+            padding: 2rem 0;
+            background: linear-gradient(135deg, #111827 0%, #1e1e2f 100%);
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1000px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .header h1 {
+            margin-bottom: 0.5rem;
+            background: -webkit-linear-gradient(45deg, #007bff, #00ff88);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .card {
+            background-color: var(--pico-background-color);
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            margin-bottom: 2rem;
+        }
+        .loader {
+            display: none;
+            text-align: center;
+            margin: 2rem 0;
+        }
+        .loader[aria-busy="true"] {
+            display: block;
+        }
+        .results-container {
+            display: none;
+        }
+        table {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .badge {
+            background-color: #333;
+            padding: 0.2rem 0.5rem;
+            border-radius: 0.5rem;
+            font-size: 0.8rem;
+        }
+        .badge-success { background-color: rgba(0, 255, 136, 0.2); color: #00ff88; }
+        .badge-warning { background-color: rgba(255, 193, 7, 0.2); color: #ffc107; }
+        .table-title {
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            border-bottom: 2px solid var(--pico-muted-border-color);
+            padding-bottom: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <main class="container">
+        <div class="header">
+            <h1>Patent Scouting Service</h1>
+            <p>Ricerca vettoriale intelligente per identificare aziende affini</p>
+        </div>
+
+        <article class="card">
+            <form id="scoutForm">
+                <div class="grid">
+                    <div>
+                        <label for="patent_id">ID Brevetto</label>
+                        <input type="text" id="patent_id" name="patent_id" placeholder="es. patent:unibo:..." required>
+                    </div>
+                    <div>
+                        <label for="language">Lingua Embedding</label>
+                        <select id="language" name="language" required>
+                            <option value="it" selected>Italiano (IT)</option>
+                            <option value="en">English (EN)</option>
+                        </select>
+                    </div>
+                </div>
+                <button type="submit" id="submitBtn">Avvia Scouting</button>
+            </form>
+        </article>
+
+        <div id="loader" class="loader" aria-busy="true">Elaborazione in corso, attendere prego...</div>
+
+        <div id="results" class="results-container">
+            <h2 class="table-title">Gruppo 1: Industrie Altamente Affini (Similarity &ge; 0.6)</h2>
+            <div class="overflow-auto">
+                <table id="tableGroup1" class="striped">
+                    <thead>
+                        <tr>
+                            <th>Azienda</th>
+                            <th>Codice Fiscale</th>
+                            <th>Provincia</th>
+                            <th>Similarità Descr.</th>
+                            <th>Indice R&D</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+
+            <h2 class="table-title">Gruppo 2: Industrie Esplorative (Similarity &le; 0.2)</h2>
+            <div class="overflow-auto">
+                <table id="tableGroup2" class="striped">
+                    <thead>
+                        <tr>
+                            <th>Azienda</th>
+                            <th>Codice Fiscale</th>
+                            <th>Provincia</th>
+                            <th>Similarità Descr.</th>
+                            <th>Indice R&D</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        document.getElementById('scoutForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const patentId = document.getElementById('patent_id').value;
+            const language = document.getElementById('language').value;
+            const loader = document.getElementById('loader');
+            const results = document.getElementById('results');
+            const submitBtn = document.getElementById('submitBtn');
+            const tbodyGroup1 = document.querySelector('#tableGroup1 tbody');
+            const tbodyGroup2 = document.querySelector('#tableGroup2 tbody');
+            
+            // UI Reset
+            results.style.display = 'none';
+            loader.style.display = 'block';
+            submitBtn.setAttribute('aria-busy', 'true');
+            submitBtn.disabled = true;
+            tbodyGroup1.innerHTML = '';
+            tbodyGroup2.innerHTML = '';
+
+            try {
+                const response = await fetch('/api/scout', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        Patent_ID: patentId,
+                        Language: language
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Errore durante la richiesta');
+                }
+
+                // Render Tables
+                renderTable(tbodyGroup1, data.group_1);
+                renderTable(tbodyGroup2, data.group_2);
+                
+                results.style.display = 'block';
+                
+            } catch (error) {
+                alert(`Errore: ${error.message}`);
+            } finally {
+                loader.style.display = 'none';
+                submitBtn.removeAttribute('aria-busy');
+                submitBtn.disabled = false;
+            }
+        });
+
+        function renderTable(tbody, dataList) {
+            if (!dataList || dataList.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center">Nessun risultato trovato in questo gruppo.</td></tr>';
+                return;
+            }
+
+            dataList.forEach(item => {
+                const simClass = item.similarity_desc >= 0.5 ? 'badge-success' : 'badge-warning';
+                
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><strong>${item.company_name}</strong></td>
+                    <td><small>${item.tax_code}</small></td>
+                    <td>${item.location_province}</td>
+                    <td><span class="badge ${simClass}">${(item.similarity_desc * 100).toFixed(1)}%</span></td>
+                    <td><strong>${item.rnd_intensity.toFixed(4)}</strong></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+    </script>
+</body>
+</html>
