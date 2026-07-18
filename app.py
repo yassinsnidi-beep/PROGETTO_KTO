@@ -3,7 +3,7 @@ from flask import Flask, request, jsonify, render_template
 from pymongo import MongoClient
 from dotenv import load_dotenv
 
-# Carica variabili d'ambiente
+# Carica variabili d'ambiente dal file .env
 load_dotenv()
 
 app = Flask(__name__)
