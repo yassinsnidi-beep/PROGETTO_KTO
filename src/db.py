@@ -19,7 +19,7 @@ def get_mongo_client(settings: Settings | None = None) -> MongoClient:
     settings = settings or load_settings()
     if not settings.mongodb_uri:
         raise ValueError("MONGODB_URI is required for MongoDB writes")
-    return MongoClient(settings.mongodb_uri, tlsCAFile=certifi.where())
+    return MongoClient(settings.mongodb_uri, tlsCAFile=certifi.where(), compressors="zlib")
 
 
 def get_database(settings: Settings | None = None) -> Database:
@@ -64,11 +64,40 @@ def upsert_documents(
     db: Database | None = None,
     settings: Settings | None = None,
 ) -> int:
-    """Upsert documents by _id using bulk ReplaceOne operations."""
+    """Upsert documents by _id using bulk ReplaceOne operations in batches of 1000."""
     if not documents:
         return 0
     if db is None:
         db = get_database(settings)
+
+    # Check if the collection is empty. If it is, use fast insert_many!
+    try:
+        is_empty = db[collection_name].count_documents({}, limit=1) == 0
+    except Exception:
+        is_empty = False
+
+    if is_empty:
+        logger.info("Collection %s is empty. Using fast insert_many in batches of 1000...", collection_name)
+        total_inserted = 0
+        batch_size = 1000
+        for i in range(0, len(documents), batch_size):
+            batch = documents[i:i+batch_size]
+            for attempt in range(3):
+                try:
+                    result = db[collection_name].insert_many(batch, ordered=False)
+                    total_inserted += len(result.inserted_ids)
+                    logger.info("Batch %d/%d completed. (Inserted %d docs so far)", (i//batch_size)+1, (len(documents)-1)//batch_size + 1, total_inserted)
+                    break
+                except Exception as e:
+                    if attempt < 2:
+                        logger.warning("Error inserting batch %d (attempt %d/3): %s. Retrying in 2 seconds...", (i//batch_size)+1, attempt+1, e)
+                        import time
+                        time.sleep(2)
+                    else:
+                        logger.error("Error inserting batch %d after all attempts: %s", (i//batch_size)+1, e)
+                        raise e
+        return total_inserted
+
     operations = [
         ReplaceOne({"_id": document["_id"]}, document, upsert=True)
         for document in documents
@@ -76,10 +105,35 @@ def upsert_documents(
     ]
     if not operations:
         return 0
-    result = db[collection_name].bulk_write(operations, ordered=False)
-    upserted = len(result.upserted_ids)
-    modified = result.modified_count
-    matched_without_change = max(result.matched_count - modified, 0)
-    count = upserted + modified + matched_without_change
-    logger.info("Upserted %s documents into %s", count, collection_name)
+        
+    batch_size = 250
+    total_upserted = 0
+    total_modified = 0
+    total_matched = 0
+    
+    logger.info("Upserting %d documents into %s in batches of %d...", len(operations), collection_name, batch_size)
+    for i in range(0, len(operations), batch_size):
+        batch_ops = operations[i:i+batch_size]
+        
+        # Retry mechanism for robustness on flaky network connections (e.g. mobile hotspots)
+        for attempt in range(3):
+            try:
+                result = db[collection_name].bulk_write(batch_ops, ordered=False)
+                total_upserted += len(result.upserted_ids)
+                total_modified += result.modified_count
+                total_matched += result.matched_count
+                logger.info("Batch %d/%d completed. (Upserted %d docs so far)", (i//batch_size)+1, (len(operations)-1)//batch_size + 1, total_upserted + total_modified)
+                break
+            except Exception as e:
+                if attempt < 2:
+                    logger.warning("Error writing batch %d (attempt %d/3): %s. Retrying in 2 seconds...", (i//batch_size)+1, attempt+1, e)
+                    import time
+                    time.sleep(2)
+                else:
+                    logger.error("Error writing batch %d after all attempts: %s", (i//batch_size)+1, e)
+                    raise e
+            
+    matched_without_change = max(total_matched - total_modified, 0)
+    count = total_upserted + total_modified + matched_without_change
+    logger.info("Successfully upserted %d documents in total into %s", count, collection_name)
     return count

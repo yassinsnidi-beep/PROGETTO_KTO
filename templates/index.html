@@ -1,40 +1,185 @@
 <!DOCTYPE html>
-<html lang="it" data-theme="dark">
+<html lang="it" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Patent Scouting Service</title>
+    <title>KTO - Scouting Brevetti & Sinergie AI — Università di Bologna</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Merriweather:ital,wght@0,300;0,400;0,700;1,300&display=swap" rel="stylesheet">
+    <script src="/static/patents_mapping.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
             --pico-font-family: 'Inter', system-ui, -apple-system, sans-serif;
-            --pico-primary: #007bff;
-            --pico-primary-hover: #0056b3;
+            --pico-primary: #bb2e29;
+            --pico-primary-background: #bb2e29;
+            --pico-primary-border: #bb2e29;
+            --pico-primary-hover: #9c2420;
+            --pico-primary-hover-background: #9c2420;
+            --pico-primary-hover-border: #9c2420;
+            --pico-primary-focus: rgba(187, 46, 41, 0.25);
+            --pico-primary-inverse: #ffffff;
+        }
+        h1, h2, h3, h4, h5, h6, .unibo-serif {
+            font-family: 'Merriweather', Georgia, serif;
+            font-weight: 700;
+            color: #111827;
+        }
+
+        /* Force UNIBO Red on buttons and links styled as buttons */
+        button:not(.secondary), [role="button"]:not(.secondary), input[type="submit"] {
+            background-color: #bb2e29 !important;
+            border-color: #bb2e29 !important;
+            color: #ffffff !important;
+        }
+        button:not(.secondary):hover, [role="button"]:not(.secondary):hover, input[type="submit"]:hover {
+            background-color: #9c2420 !important;
+            border-color: #9c2420 !important;
+            color: #ffffff !important;
+        }
+        
+        /* Outline buttons in UNIBO Red */
+        button.outline:not(.secondary), [role="button"].outline:not(.secondary) {
+            background-color: transparent !important;
+            border-color: #bb2e29 !important;
+            color: #bb2e29 !important;
+        }
+        button.outline:not(.secondary):hover, [role="button"].outline:not(.secondary):hover {
+            background-color: rgba(187, 46, 41, 0.08) !important;
+            border-color: #9c2420 !important;
+            color: #9c2420 !important;
         }
         body {
-            padding: 2rem 0;
-            background: linear-gradient(135deg, #111827 0%, #1e1e2f 100%);
+            padding: 0;
+            margin: 0;
+            background-color: #f4f5f7;
             min-height: 100vh;
+        }
+        main {
+            padding: 2rem 0;
         }
         .container {
             max-width: 1000px;
         }
-        .header {
-            text-align: center;
-            margin-bottom: 2rem;
-        }
-        .header h1 {
-            margin-bottom: 0.5rem;
-            background: -webkit-linear-gradient(45deg, #007bff, #00ff88);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
         .card {
-            background-color: var(--pico-background-color);
+            background-color: #ffffff;
             padding: 2rem;
-            border-radius: 1rem;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            border-radius: 4px;
+            border: 1px solid #e5e7eb;
+            border-top: 4px solid #bb2e29;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
             margin-bottom: 2rem;
+        }
+        .category-card {
+            background-color: #ffffff;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 1rem 1.2rem;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.01);
+            user-select: none;
+        }
+        .category-card:hover {
+            border-color: #bb2e29;
+            box-shadow: 0 4px 12px rgba(187, 46, 41, 0.08);
+            transform: translateY(-2px);
+        }
+        .category-card.active {
+            border-color: #bb2e29;
+            background-color: rgba(187, 46, 41, 0.04);
+            box-shadow: 0 4px 12px rgba(187, 46, 41, 0.12);
+            border-left: 4px solid #bb2e29;
+        }
+        .patent-list-item {
+            padding: 0.8rem 1rem;
+            border: 1px solid #e5e7eb;
+            border-radius: 4px;
+            background-color: #f9fafb;
+            cursor: pointer;
+            transition: all 0.15s ease-in-out;
+            text-align: left;
+        }
+        .patent-list-item:hover {
+            background-color: rgba(187, 46, 41, 0.04);
+            border-color: rgba(187, 46, 41, 0.3);
+            padding-left: 1.2rem;
+        }
+        
+        /* Accordion official UNIBO styles */
+        .accordion-row-wrapper {
+            border-bottom: 1px solid #dee2e6;
+        }
+        .accordion-row-wrapper:first-of-type {
+            border-top: 1px solid #dee2e6;
+        }
+        .accordion-header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.2rem 0;
+            cursor: pointer;
+            user-select: none;
+            transition: background-color 0.2s ease;
+        }
+        .accordion-header-row:hover {
+            background-color: rgba(0,0,0,0.01);
+        }
+        .accordion-title-text {
+            font-family: 'Merriweather', Georgia, serif;
+            font-size: 1.15rem;
+            color: #2b2b2b;
+            font-weight: 500;
+        }
+        .accordion-count {
+            font-size: 0.95rem;
+            color: #6b7280;
+            font-weight: 500;
+            font-family: 'Inter', sans-serif;
+        }
+        .accordion-toggle-btn {
+            width: 26px;
+            height: 26px;
+            border-radius: 50% !important;
+            background-color: #bb2e29 !important;
+            border: 1px solid #bb2e29 !important;
+            color: #ffffff !important;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            margin: 0;
+            cursor: pointer;
+            transition: transform 0.2s ease-in-out;
+        }
+        .accordion-row-wrapper.active .accordion-toggle-btn {
+            transform: rotate(180deg);
+        }
+        .accordion-content-panel {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out, padding 0.3s ease-out;
+            background-color: #fafbfc;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .accordion-row-wrapper.active .accordion-content-panel {
+            max-height: 400px;
+            overflow-y: auto;
+            padding: 1rem;
+            border-top: 1px solid #eee;
+            margin-bottom: 0.8rem;
+        }
+        input, select, button, .badge {
+            border-radius: 4px !important;
+        }
+        table th {
+            font-weight: 600;
+            color: #4b5563;
+            border-bottom: 2px solid #e5e7eb;
         }
         .loader {
             display: none;
@@ -55,110 +200,955 @@
             to { opacity: 1; transform: translateY(0); }
         }
         .badge {
-            background-color: #333;
+            background-color: #e5e7eb;
+            color: #374151;
             padding: 0.2rem 0.5rem;
-            border-radius: 0.5rem;
+            border-radius: 4px;
             font-size: 0.8rem;
+            font-weight: 500;
         }
-        .badge-success { background-color: rgba(0, 255, 136, 0.2); color: #00ff88; }
-        .badge-warning { background-color: rgba(255, 193, 7, 0.2); color: #ffc107; }
+        .badge-success { background-color: rgba(46, 125, 50, 0.1); color: #2e7d32; }
+        .badge-warning { background-color: rgba(239, 108, 0, 0.1); color: #ef6c00; }
         .table-title {
             margin-top: 2rem;
             margin-bottom: 1rem;
-            border-bottom: 2px solid var(--pico-muted-border-color);
+            border-bottom: 2px solid #e5e7eb;
             padding-bottom: 0.5rem;
+            color: #111827;
+        }
+        footer a {
+            transition: color 0.2s ease, opacity 0.2s ease;
+        }
+        footer a:hover {
+            color: #ffffff !important;
+            opacity: 1 !important;
+            text-decoration: underline !important;
+        }
+        #gkDirectSearchBtn {
+            transition: background-color 0.2s ease, border-color 0.2s ease;
+        }
+        #gkDirectSearchBtn:hover {
+            background-color: #004182 !important;
+            border-color: #004182 !important;
+            color: #ffffff !important;
+            text-decoration: none !important;
+        }
+        .company-row {
+            background: #ffffff;
+            border: 1px solid #dee2e6;
+            border-left: 5px solid #bb2e29;
+            border-radius: 6px;
+            padding: 1.25rem 1.5rem;
+            margin-bottom: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.015);
+            transition: all 0.2s ease-in-out;
+        }
+        .company-row:hover {
+            border-color: #bb2e29;
+            box-shadow: 0 4px 12px rgba(187, 46, 41, 0.08);
+            transform: translateY(-2px);
         }
     </style>
 </head>
 <body>
+    <header style="background-color: #ffffff; color: #212529; padding: 1.2rem 0; border-bottom: 5px solid #bb2e29; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+        <div class="container" style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; max-width: 1000px; margin: 0 auto; padding: 0 1rem;">
+            <div style="display: flex; align-items: center; gap: 2rem;">
+                <img src="/static/logo-unibo.png" alt="Logo Università di Bologna" style="height: 95px; width: auto; object-fit: contain;">
+                <div style="border-left: 2px solid #dee2e6; padding-left: 2rem; display: flex; align-items: center; height: 65px;">
+                    <div style="font-family: 'Inter', sans-serif; font-size: 1.3rem; font-weight: 700; color: #bb2e29; letter-spacing: 0.75px; text-transform: uppercase;">
+                        Knowledge Transfer Office (KTO)
+                    </div>
+                </div>
+            </div>
+            <!-- Spazio a destra vuoto per pulizia di design -->
+        </div>
+    </header>
+
     <main class="container">
-        <div class="header">
-            <h1>Patent Scouting Service</h1>
-            <p>Ricerca vettoriale intelligente per identificare aziende affini</p>
+        <h1 style="font-family: 'Merriweather', serif; font-size: 2.1rem; font-weight: 700; color: #212529; margin-top: 1.5rem; margin-bottom: 0.5rem; line-height: 1.2;">
+            Scouting Brevetti & Sinergie Industriali AI
+        </h1>
+        <p style="font-family: 'Inter', sans-serif; font-size: 1.05rem; color: #555555; margin-bottom: 2rem; border-left: 3px solid #bb2e29; padding-left: 1rem; line-height: 1.5;">
+            Strumento di matchmaking semantico tra i brevetti dell'Alma Mater e il tessuto industriale.
+        </p>
+
+        <!-- Menu Navigazione a Schede (Tabs) -->
+        <div style="display: flex; gap: 1rem; border-bottom: 2px solid #dee2e6; margin-bottom: 2rem; padding-bottom: 0.5rem; flex-wrap: wrap;">
+            <button id="tabMatchmaking" onclick="switchTab('matchmaking')" style="margin: 0; padding: 0.5rem 1.5rem; width: auto; font-size: 0.9rem; font-weight: bold; background-color: #bb2e29; border-color: #bb2e29; color: #ffffff; height: auto;">
+                Matchmaking Brevetti
+            </button>
+            <button id="tabAnalytics" onclick="switchTab('analytics')" class="outline" style="margin: 0; padding: 0.5rem 1.5rem; width: auto; font-size: 0.9rem; font-weight: bold; background-color: transparent; border-color: #6b7280; color: #6b7280; height: auto;">
+                Dashboard Analytics KTO
+            </button>
         </div>
 
-        <article class="card">
-            <form id="scoutForm">
-                <div class="grid">
+        <!-- Nuova Vista Analytics KTO (Dashboard) -->
+        <div id="analyticsView" style="display: none;">
+            
+            <!-- Cards Riassuntive (KPI) -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem; margin-bottom: 2.5rem;">
+                <!-- KPI 1 -->
+                <div style="background: #ffffff; border: 1px solid #dee2e6; border-top: 4px solid #bb2e29; border-radius: 4px; padding: 1.5rem; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.02);">
+                    <div style="font-size: 0.8rem; text-transform: uppercase; color: #6b7280; font-weight: bold; letter-spacing: 0.5px; margin-bottom: 0.5rem; font-family: 'Inter', sans-serif;">
+                        Brevetti in Portafoglio
+                    </div>
+                    <div style="font-size: 2.2rem; font-weight: 800; color: #bb2e29; line-height: 1;">250</div>
+                    <p style="margin: 0.5rem 0 0 0; font-size: 0.75rem; color: #6b7280;">Brevetti d'Ateneo caricati nel DB</p>
+                </div>
+                <!-- KPI 2 -->
+                <div style="background: #ffffff; border: 1px solid #dee2e6; border-top: 4px solid #bb2e29; border-radius: 4px; padding: 1.5rem; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.02);">
+                    <div style="font-size: 0.8rem; text-transform: uppercase; color: #6b7280; font-weight: bold; letter-spacing: 0.5px; margin-bottom: 0.5rem; font-family: 'Inter', sans-serif;">
+                        Aziende ER
+                    </div>
+                    <div style="font-size: 2.2rem; font-weight: 800; color: #bb2e29; line-height: 1;">10.388</div>
+                    <p style="margin: 0.5rem 0 0 0; font-size: 0.75rem; color: #6b7280;">Aziende mappate in Emilia-Romagna</p>
+                </div>
+                <!-- KPI 3 -->
+                <div style="background: #ffffff; border: 1px solid #dee2e6; border-top: 4px solid #bb2e29; border-radius: 4px; padding: 1.5rem; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.02);">
+                    <div style="font-size: 0.8rem; text-transform: uppercase; color: #6b7280; font-weight: bold; letter-spacing: 0.5px; margin-bottom: 0.5rem; font-family: 'Inter', sans-serif;">
+                        Intensità R&D Media
+                    </div>
+                    <div style="font-size: 2.2rem; font-weight: 800; color: #bb2e29; line-height: 1;">0.19%</div>
+                    <p style="margin: 0.5rem 0 0 0; font-size: 0.75rem; color: #6b7280;">Intensità di spesa in R&D media</p>
+                </div>
+                <!-- KPI 4 -->
+                <div style="background: #ffffff; border: 1px solid #dee2e6; border-top: 4px solid #bb2e29; border-radius: 4px; padding: 1.5rem; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.02);">
+                    <div style="font-size: 0.8rem; text-transform: uppercase; color: #6b7280; font-weight: bold; letter-spacing: 0.5px; margin-bottom: 0.5rem; font-family: 'Inter', sans-serif;">
+                        Province Coperte
+                    </div>
+                    <div style="font-size: 2.2rem; font-weight: 800; color: #bb2e29; line-height: 1;">9 / 9</div>
+                    <p style="margin: 0.5rem 0 0 0; font-size: 0.75rem; color: #6b7280;">Presenza su tutto il territorio regionale</p>
+                </div>
+            </div>
+
+            <!-- Griglia dei Grafici -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 2.5rem; margin-bottom: 3rem; align-items: start;">
+                <!-- Grafico Brevetti -->
+                <article class="card" style="background-color: #ffffff; border: 1px solid #dee2e6; border-radius: 4px; padding: 2rem; box-shadow: 0 4px 12px rgba(0,0,0,0.02); margin: 0;">
+                    <h5 style="font-family: 'Merriweather', serif; font-size: 1.15rem; font-weight: bold; margin-top: 0; margin-bottom: 1.5rem; color: #212529; border-bottom: 1px solid #dee2e6; padding-bottom: 0.5rem;">
+                        Distribuzione Brevetti per Area Scientifica
+                    </h5>
+                    <div style="max-height: 320px; display: flex; justify-content: center; position: relative;">
+                        <canvas id="patentAreaChart" style="max-width: 100%; max-height: 300px;"></canvas>
+                    </div>
+                </article>
+
+                <!-- Grafico Aziende per Provincia -->
+                <article class="card" style="background-color: #ffffff; border: 1px solid #dee2e6; border-radius: 4px; padding: 2rem; box-shadow: 0 4px 12px rgba(0,0,0,0.02); margin: 0;">
+                    <h5 style="font-family: 'Merriweather', serif; font-size: 1.15rem; font-weight: bold; margin-top: 0; margin-bottom: 1.5rem; color: #212529; border-bottom: 1px solid #dee2e6; padding-bottom: 0.5rem;">
+                        Aziende in Emilia-Romagna per Provincia
+                    </h5>
+                    <div style="max-height: 320px; position: relative;">
+                        <canvas id="companyProvinceChart" style="max-width: 100%; max-height: 300px;"></canvas>
+                    </div>
+                </article>
+            </div>
+
+            <!-- Dettaglio Dati Province e KTO Insights -->
+            <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 2.5rem; flex-wrap: wrap; margin-bottom: 2rem; align-items: start;">
+                <!-- Tabella Dati Province -->
+                <article class="card" style="background-color: #ffffff; border: 1px solid #dee2e6; border-radius: 4px; padding: 2rem; box-shadow: 0 4px 12px rgba(0,0,0,0.02); margin: 0;">
+                    <h5 style="font-family: 'Merriweather', serif; font-size: 1.15rem; font-weight: bold; margin-top: 0; margin-bottom: 1rem; color: #212529;">
+                        Tabella di Dettaglio Territoriale (Aziende)
+                    </h5>
+                    <div class="overflow-auto">
+                        <table class="striped" style="margin: 0; font-size: 0.85rem;">
+                            <thead>
+                                <tr>
+                                    <th>Provincia</th>
+                                    <th style="text-align: right;">Numero Aziende Mappate</th>
+                                    <th style="text-align: right;">% sul Totale Regionale</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>Bologna (BO)</strong></td>
+                                    <td style="text-align: right; font-weight: 500;">2.471</td>
+                                    <td style="text-align: right; color: #6b7280;">23.8%</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Modena (MO)</strong></td>
+                                    <td style="text-align: right; font-weight: 500;">1.917</td>
+                                    <td style="text-align: right; color: #6b7280;">18.5%</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Reggio nell'Emilia (RE)</strong></td>
+                                    <td style="text-align: right; font-weight: 500;">1.397</td>
+                                    <td style="text-align: right; color: #6b7280;">13.4%</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Parma (PR)</strong></td>
+                                    <td style="text-align: right; font-weight: 500;">1.251</td>
+                                    <td style="text-align: right; color: #6b7280;">12.0%</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Forlì-Cesena (FC)</strong></td>
+                                    <td style="text-align: right; font-weight: 500;">904</td>
+                                    <td style="text-align: right; color: #6b7280;">8.7%</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Ravenna (RA)</strong></td>
+                                    <td style="text-align: right; font-weight: 500;">809</td>
+                                    <td style="text-align: right; color: #6b7280;">7.8%</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Rimini (RN)</strong></td>
+                                    <td style="text-align: right; font-weight: 500;">633</td>
+                                    <td style="text-align: right; color: #6b7280;">6.1%</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Piacenza (PC)</strong></td>
+                                    <td style="text-align: right; font-weight: 500;">608</td>
+                                    <td style="text-align: right; color: #6b7280;">5.9%</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Ferrara (FE)</strong></td>
+                                    <td style="text-align: right; font-weight: 500;">396</td>
+                                    <td style="text-align: right; color: #6b7280;">3.8%</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </article>
+
+                <!-- Insights del KTO -->
+                <article class="card" style="background-color: #ffffff; border: 1px solid #dee2e6; border-left: 5px solid #bb2e29; border-radius: 4px; padding: 2rem; box-shadow: 0 4px 12px rgba(0,0,0,0.02); margin: 0; height: 100%;">
+                    <h5 style="font-family: 'Merriweather', serif; font-size: 1.15rem; font-weight: bold; margin-top: 0; margin-bottom: 1rem; color: #212529;">
+                        Key KTO Insights
+                    </h5>
+                    <ul style="padding-left: 1.2rem; font-size: 0.85rem; line-height: 1.6; color: #4b5563; margin: 0; display: flex; flex-direction: column; gap: 0.8rem;">
+                        <li>
+                            <strong>Concentrazione del Network:</strong> Bologna e Modena costituiscono la colonna portante della rete di imprese industriali del KTO, coprendo insieme più del **42.3%** del mercato regionale mappato.
+                        </li>
+                        <li>
+                            <strong>Cluster Leader (Salute):</strong> Con ben **87 brevetti** depositati (34.8% del portafoglio), l'area biomedica e della salute rappresenta la punta di diamante della ricerca UNIBO, ideale per sinergie con il distretto biomedicale di Mirandola (MO).
+                        </li>
+                        <li>
+                            <strong>Bioeconomia e Ambiente:</strong> Rappresenta il secondo cluster per volume (**61 brevetti**), a supporto del tessuto agroalimentare d'eccellenza della Food Valley regionale (Parma, Reggio Emilia, Piacenza).
+                        </li>
+                        <li>
+                            <strong>R&D Intensity:</strong> La spesa media dichiarata in Ricerca & Sviluppo del network aziendale è dello **0.19%**, con picchi elevati in settori industriali tecnologici avanzati e farmaceutici che raggiungono l'**80.4%**.
+                        </li>
+                    </ul>
+                </article>
+            </div>
+        </div>
+
+        <div id="searchView">
+            <!-- Sezione Ricerca Brevetti per Titolo (Top) -->
+            <article class="card" style="background-color: #ffffff; border: 1px solid #dee2e6; border-radius: 4px; padding: 2rem; margin-bottom: 2rem; box-shadow: 0 4px 12px rgba(0,0,0,0.02);">
+            <h5 style="font-family: 'Merriweather', serif; font-size: 1.25rem; font-weight: bold; margin-top: 0; margin-bottom: 1rem; color: #212529; border-bottom: 1px solid #dee2e6; padding-bottom: 0.5rem;">
+                Ricerca Brevetto per Titolo
+            </h5>
+            <form id="scoutForm" style="margin: 0;">
+                <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1rem; flex-wrap: wrap;">
                     <div>
-                        <label for="patent_id">ID Brevetto</label>
-                        <input type="text" id="patent_id" name="patent_id" placeholder="es. patent:unibo:..." required>
+                        <label for="patent_search" style="font-weight: 500;">Seleziona un Brevetto</label>
+                        <input type="text" id="patent_search" list="patentList" placeholder="Digita per cercare il brevetto..." required style="margin-bottom: 0;">
+                        <datalist id="patentList"></datalist>
+                        <div id="patentSearchLinkContainer" style="display: none; margin-top: 0.5rem; text-align: left;">
+                            <a id="patentSearchLink" href="#" target="_blank" style="font-size: 0.8rem; color: #bb2e29; text-decoration: underline; font-weight: 600; display: inline-flex; align-items: center; gap: 0.3rem;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" style="vertical-align: middle;">
+                                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                                    <polyline points="15 3 21 3 21 9"></polyline>
+                                    <line x1="10" y1="14" x2="21" y2="3"></line>
+                                </svg>
+                                Vedi scheda brevetto sul portale d'Ateneo
+                            </a>
+                        </div>
                     </div>
                     <div>
-                        <label for="language">Lingua Embedding</label>
-                        <select id="language" name="language" required>
+                        <label for="language" style="font-weight: 500;">Lingua di Analisi</label>
+                        <select id="language" name="language" required style="margin-bottom: 0;">
                             <option value="it" selected>Italiano (IT)</option>
                             <option value="en">English (EN)</option>
                         </select>
                     </div>
                 </div>
-                <button type="submit" id="submitBtn">Avvia Scouting</button>
+                <div style="display: flex; gap: 1rem; margin-top: 1.5rem; flex-wrap: wrap;">
+                    <button type="submit" id="submitBtn" style="margin: 0; flex: 1; min-width: 200px; font-weight: bold;">Avvia Scouting Sinergie</button>
+                    <a href="https://www.unibo.it/it/con-societa-e-impresa/imprese-e-non-profit/brevetti-ateneo/brevetti-ateneo" target="_blank" role="button" class="outline" style="margin: 0; flex: 1; min-width: 200px; text-align: center; display: inline-flex; align-items: center; justify-content: center; text-decoration: none;">
+                        Portale Brevetti d'Ateneo
+                    </a>
+                </div>
             </form>
         </article>
+
+        <!-- Sezione Selezione Brevetti in Accordion Stile Ufficiale UNIBO (Bottom) -->
+        <div style="background-color: #ffffff; border: 1px solid #dee2e6; border-radius: 4px; padding: 2rem; margin-bottom: 2rem; box-shadow: 0 4px 12px rgba(0,0,0,0.02);">
+            <h5 style="font-family: 'Merriweather', serif; font-size: 1.25rem; font-weight: bold; margin-top: 0; margin-bottom: 1.5rem; color: #212529; border-bottom: 1px solid #dee2e6; padding-bottom: 0.5rem;">
+                Sfoglia i Brevetti per Categoria / Cluster
+            </h5>
+            
+
+            <!-- Riga Statistiche -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; color: #6b7280; font-size: 0.85rem;">
+                <div id="patentTotalCount" style="font-weight: 500; color: #374151; font-family: 'Inter', sans-serif;">Caricamento brevetti...</div>
+            </div>
+
+            <!-- Contenitore Righe Accordion -->
+            <div id="uniboAccordionContainer" style="display: flex; flex-direction: column;">
+                
+                <!-- Riga 1: Bioeconomia, Agricoltura e Ambiente -->
+                <div class="accordion-row-wrapper" id="row-bioeconomia">
+                    <div class="accordion-header-row" onclick="toggleAccordion('Bioeconomia, Agricoltura e Ambiente', this)">
+                        <div class="accordion-title-text">Bioeconomia, Agricoltura e Ambiente</div>
+                        <div style="display: flex; align-items: center; gap: 1.5rem;">
+                            <span class="accordion-count" id="count-bioeconomia">0</span>
+                            <button class="accordion-toggle-btn">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="accordion-content-panel" id="panel-bioeconomia"></div>
+                </div>
+
+                <!-- Riga 2: Clima, Energia e Mobilità -->
+                <div class="accordion-row-wrapper" id="row-clima">
+                    <div class="accordion-header-row" onclick="toggleAccordion('Clima, Energia e Mobilità', this)">
+                        <div class="accordion-title-text">Clima, Energia e Mobilità</div>
+                        <div style="display: flex; align-items: center; gap: 1.5rem;">
+                            <span class="accordion-count" id="count-clima">0</span>
+                            <button class="accordion-toggle-btn">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="accordion-content-panel" id="panel-clima"></div>
+                </div>
+
+                <!-- Riga 3: Industria, Digitale e Sicurezza -->
+                <div class="accordion-row-wrapper" id="row-industria">
+                    <div class="accordion-header-row" onclick="toggleAccordion('Industria, Digitale e Sicurezza', this)">
+                        <div class="accordion-title-text">Industria, Digitale e Sicurezza</div>
+                        <div style="display: flex; align-items: center; gap: 1.5rem;">
+                            <span class="accordion-count" id="count-industria">0</span>
+                            <button class="accordion-toggle-btn">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="accordion-content-panel" id="panel-industria"></div>
+                </div>
+
+                <!-- Riga 4: Salute -->
+                <div class="accordion-row-wrapper" id="row-salute">
+                    <div class="accordion-header-row" onclick="toggleAccordion('Salute', this)">
+                        <div class="accordion-title-text">Salute</div>
+                        <div style="display: flex; align-items: center; gap: 1.5rem;">
+                            <span class="accordion-count" id="count-salute">0</span>
+                            <button class="accordion-toggle-btn">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="accordion-content-panel" id="panel-salute"></div>
+                </div>
+
+                <!-- Riga 5: Varietà vegetali -->
+                <div class="accordion-row-wrapper" id="row-varieta">
+                    <div class="accordion-header-row" onclick="toggleAccordion('Varietà vegetali', this)">
+                        <div class="accordion-title-text">Varietà vegetali</div>
+                        <div style="display: flex; align-items: center; gap: 1.5rem;">
+                            <span class="accordion-count" id="count-varieta">0</span>
+                            <button class="accordion-toggle-btn">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="accordion-content-panel" id="panel-varieta"></div>
+                </div>
+
+            </div>
+        </div>
+        </div> <!-- Chiude searchView -->
 
         <div id="loader" class="loader" aria-busy="true">Elaborazione in corso, attendere prego...</div>
 
         <div id="results" class="results-container">
-            <h2 class="table-title">Gruppo 1: Industrie Altamente Affini (Similarity &ge; 0.6)</h2>
-            <div class="overflow-auto">
-                <table id="tableGroup1" class="striped">
-                    <thead>
-                        <tr>
-                            <th>Azienda</th>
-                            <th>Codice Fiscale</th>
-                            <th>Provincia</th>
-                            <th>Similarità Descr.</th>
-                            <th>Indice R&D</th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
+            <!-- Pulsante Torna alla Ricerca -->
+            <button class="outline" onclick="goBackToSearch()" style="margin-bottom: 1.5rem; width: auto; padding: 0.5rem 1.2rem; font-weight: bold; border-color: #bb2e29; color: #bb2e29; display: inline-flex; align-items: center; gap: 0.5rem; background: transparent; height: auto;">
+                ← Torna alla Ricerca
+            </button>
+
+            <!-- Selected Patent Title Display Card -->
+            <div style="background-color: #ffffff; border: 1px solid #dee2e6; border-left: 5px solid #bb2e29; border-radius: 4px; padding: 1.5rem; margin-bottom: 2rem; box-shadow: 0 4px 12px rgba(0,0,0,0.02);">
+                <div style="font-size: 0.8rem; text-transform: uppercase; color: #bb2e29; font-weight: bold; letter-spacing: 0.5px; margin-bottom: 0.3rem; font-family: 'Inter', sans-serif;">
+                    Brevetto Selezionato per lo Scouting
+                </div>
+                <h3 id="displayPatentTitle" style="font-family: 'Merriweather', serif; font-size: 1.35rem; color: #212529; margin: 0 0 0.8rem 0; line-height: 1.3;"></h3>
+                <div id="displayPatentUrlContainer" style="display: none; text-align: left;">
+                    <a id="displayPatentUrl" href="#" target="_blank" class="outline" role="button" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; border-color: #bb2e29; color: #bb2e29; text-decoration: none; display: inline-flex; align-items: center; gap: 0.3rem; font-weight: 600; background: transparent; width: auto; margin: 0; height: auto;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" style="vertical-align: middle;">
+                            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                            <polyline points="15 3 21 3 21 9"></polyline>
+                            <line x1="10" y1="14" x2="21" y2="3"></line>
+                        </svg>
+                        Vedi scheda brevetto sul portale d'Ateneo
+                    </a>
+                </div>
             </div>
 
-            <h2 class="table-title">Gruppo 2: Industrie Esplorative (Similarity &le; 0.2)</h2>
-            <div class="overflow-auto">
-                <table id="tableGroup2" class="striped">
-                    <thead>
-                        <tr>
-                            <th>Azienda</th>
-                            <th>Codice Fiscale</th>
-                            <th>Provincia</th>
-                            <th>Similarità Descr.</th>
-                            <th>Indice R&D</th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
+            <!-- Selettore del Gruppo di Scouting (Sotto-schede) -->
+            <div style="display: flex; gap: 0.5rem; margin-bottom: 1.5rem; border-bottom: 2px solid #dee2e6; padding-bottom: 0.5rem; flex-wrap: wrap;">
+                <button id="btnGroup1" onclick="switchGroup('group1')" style="margin: 0; padding: 0.4rem 1.2rem; width: auto; font-size: 0.85rem; font-weight: bold; background-color: #bb2e29; border-color: #bb2e29; color: #ffffff; height: auto;">
+                    Industrie Altamente Affini (Gruppo 1)
+                </button>
+                <button id="btnGroup2" onclick="switchGroup('group2')" class="outline" style="margin: 0; padding: 0.4rem 1.2rem; width: auto; font-size: 0.85rem; font-weight: bold; background-color: transparent; border-color: #6b7280; color: #6b7280; height: auto;">
+                    Industrie Correlate / Spillover (Gruppo 2)
+                </button>
+            </div>
+
+            <!-- Contenitore Gruppo 1 -->
+            <div id="containerGroup1">
+                <h2 class="table-title" style="margin-top: 0;">Gruppo 1: Industrie Altamente Affini (Similarità &ge; 75%)</h2>
+                <div id="listGroup1" style="display: flex; flex-direction: column; gap: 1rem; margin-top: 1rem;"></div>
+            </div>
+
+            <!-- Contenitore Gruppo 2 -->
+            <div id="containerGroup2" style="display: none;">
+                <h2 class="table-title" style="margin-top: 0;">Gruppo 2: Industrie Correlate/Spillover (Similarità 70% - 75%)</h2>
+                <div id="listGroup2" style="display: flex; flex-direction: column; gap: 1rem; margin-top: 1rem;"></div>
             </div>
         </div>
+        
+        <!-- Dialog Modal for AIDA Company Details -->
+        <dialog id="aidaModal">
+            <article style="max-width: 800px; width: 95%;">
+                <header>
+                    <button aria-label="Close" rel="prev" onclick="closeAidaModal()"></button>
+                    <h3 style="margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" style="vertical-align: middle; color: #bb2e29;">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                            <line x1="9" y1="9" x2="15" y2="9"></line>
+                            <line x1="9" y1="13" x2="15" y2="13"></line>
+                            <line x1="9" y1="17" x2="11" y2="17"></line>
+                        </svg>
+                        Dettaglio Anagrafica AIDA
+                    </h3>
+                </header>
+                
+                <div style="background: rgba(187, 46, 41, 0.05); border: 1px solid rgba(187, 46, 41, 0.15); border-radius: 0.5rem; padding: 1.2rem; margin-bottom: 1.5rem;">
+                    <h4 id="aidaCompTitle" style="margin: 0; color: #bb2e29;"></h4>
+                    <p style="margin: 0.2rem 0 0 0; font-size: 0.8rem; color: #6b7280; text-transform: uppercase; font-weight: bold; letter-spacing: 0.5px; font-family: 'Inter', sans-serif;">
+                        Profilo Aziendale e Dati Finanziari Estratti da Database AIDA
+                    </p>
+                </div>
+
+                <div style="max-height: 55vh; overflow-y: auto; padding-right: 0.5rem;">
+                    <!-- Sezione 1: Informazioni Generali e Contatti -->
+                    <h6 style="color: #bb2e29; font-weight: bold; border-bottom: 1px solid #dee2e6; padding-bottom: 0.25rem; margin-top: 0; margin-bottom: 0.75rem;">
+                        Anagrafica Generale & Contatti
+                    </h6>
+                    <table style="font-size: 0.85rem; margin-bottom: 1.5rem;">
+                        <tbody>
+                            <tr>
+                                <td style="width: 30%; font-weight: 600; color: #4b5563;">Codice Fiscale:</td>
+                                <td id="aidaTaxCode" style="font-weight: 500;"></td>
+                                <td style="width: 25%; font-weight: 600; color: #4b5563;">N. CCIAA:</td>
+                                <td id="aidaCciaa" style="font-weight: 500;"></td>
+                            </tr>
+                            <tr>
+                                <td style="font-weight: 600; color: #4b5563;">Indirizzo Sede:</td>
+                                <td id="aidaAddress" colspan="3"></td>
+                            </tr>
+                            <tr>
+                                <td style="font-weight: 600; color: #4b5563;">Provincia / Regione:</td>
+                                <td><span id="aidaProvince"></span> / <span id="aidaRegion"></span></td>
+                                <td style="font-weight: 600; color: #4b5563;">Sito Web:</td>
+                                <td id="aidaWebsite"></td>
+                            </tr>
+                            <tr>
+                                <td style="font-weight: 600; color: #4b5563;">Telefono:</td>
+                                <td id="aidaPhone" colspan="3"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <!-- Sezione 2: Classificazione & Profilo -->
+                    <h6 style="color: #bb2e29; font-weight: bold; border-bottom: 1px solid #dee2e6; padding-bottom: 0.25rem; margin-bottom: 0.75rem;">
+                        Classificazione Industriale & Attività
+                    </h6>
+                    <table style="font-size: 0.85rem; margin-bottom: 1.5rem;">
+                        <tbody>
+                            <tr>
+                                <td style="width: 25%; font-weight: 600; color: #4b5563;">Codice NACE Rev.2:</td>
+                                <td id="aidaNace" style="font-weight: 500;"></td>
+                            </tr>
+                            <tr>
+                                <td style="font-weight: 600; color: #4b5563;">Codice ATECO 2007:</td>
+                                <td id="aidaAteco" style="font-weight: 500;"></td>
+                            </tr>
+                            <tr>
+                                <td style="font-weight: 600; color: #4b5563; vertical-align: top;">Profilo (IT):</td>
+                                <td id="aidaProfileIt" style="text-align: justify; line-height: 1.4;"></td>
+                            </tr>
+                            <tr>
+                                <td style="font-weight: 600; color: #4b5563; vertical-align: top;">Profilo (EN):</td>
+                                <td id="aidaProfileEn" style="text-align: justify; line-height: 1.4; color: #4b5563;"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <!-- Sezione 3: Dati Economici e Finanziari -->
+                    <h6 style="color: #bb2e29; font-weight: bold; border-bottom: 1px solid #dee2e6; padding-bottom: 0.25rem; margin-bottom: 0.75rem;">
+                        Dati Finanziari & Indicatori R&D
+                    </h6>
+                    <table style="font-size: 0.85rem; margin-bottom: 0;">
+                        <tbody>
+                            <tr>
+                                <td style="width: 30%; font-weight: 600; color: #4b5563;">Fatturato (Revenues):</td>
+                                <td id="aidaRevenues" style="font-weight: bold; color: #bb2e29;"></td>
+                                <td style="width: 25%; font-weight: 600; color: #4b5563;">Dipendenti (Employees):</td>
+                                <td id="aidaEmployees" style="font-weight: 500;"></td>
+                            </tr>
+                            <tr>
+                                <td style="font-weight: 600; color: #4b5563;">Spese R&D (Aida):</td>
+                                <td id="aidaRndExpenses" colspan="3"></td>
+                            </tr>
+                            <tr>
+                                <td style="font-weight: 600; color: #4b5563;">Intensità di Spesa R&D:</td>
+                                <td id="aidaRndIntensity" style="font-weight: bold; color: #2e7d32;"></td>
+                                <td style="font-weight: 600; color: #4b5563;">Punteggio Continuità:</td>
+                                <td id="aidaRndContinuity" style="font-weight: 500;"></td>
+                            </tr>
+                            <tr>
+                                <td style="font-weight: 600; color: #4b5563;">Crescita R&D (3 anni):</td>
+                                <td id="aidaRndGrowth" colspan="3"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <footer style="display: flex; justify-content: flex-end; padding-top: 1rem; border-top: 1px solid #e5e7eb; margin-top: 1.5rem;">
+                    <button class="secondary" onclick="closeAidaModal()" style="padding: 0.5rem 1rem; margin: 0; font-size: 0.9rem; background-color: #6b7280; border-color: #6b7280;">Chiudi</button>
+                </footer>
+            </article>
+        </dialog>
+
+        <!-- Dialog Modal for AI Project Proposal -->
+        <dialog id="proposalModal">
+            <article style="max-width: 900px; width: 95%;">
+                <header>
+                    <button aria-label="Close" rel="prev" onclick="closeProposalModal()"></button>
+                    <h3 style="margin: 0;">Proposta di Progetto AI</h3>
+                </header>
+                
+                <div id="modalLoader" style="display: none; text-align: center; padding: 2rem 0;">
+                    <span aria-busy="true">Analisi sinergie con Gemini Pro in corso...</span>
+                </div>
+                
+                <div id="modalContent" style="display: none; max-height: 60vh; overflow-y: auto;">
+                    <!-- Header Card -->
+                    <div style="background: rgba(187, 46, 41, 0.1); border: 1px solid rgba(187, 46, 41, 0.2); border-radius: 0.5rem; padding: 1.5rem; margin-bottom: 1.5rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                            <h4 id="propTitle" style="margin: 0; background: -webkit-linear-gradient(45deg, #bb2e29, #f75c57); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></h4>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <span class="badge badge-success" id="propTrl">TRL</span>
+                                <span class="badge" id="propDuration" style="background-color: rgba(255,193,7,0.2); color:#ffc107;">⏱️ 0 Mesi</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Company Contact Information Card -->
+                    <div id="propCompanyContacts" style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 0.5rem; padding: 1rem; margin-bottom: 1.5rem; display: none; font-size: 0.9rem;">
+                        <h6 style="margin-bottom: 0.5rem; color: #bb2e29; font-weight: bold;">📞 Riferimenti Aziendali per la Collaborazione</h6>
+                        <div class="grid" style="margin: 0; gap: 1rem;">
+                            <div><strong>Sito Web:</strong> <span id="propContactWebsite">N/A</span></div>
+                            <div><strong>Telefono:</strong> <span id="propContactPhone">N/A</span></div>
+                            <div><strong>Sede Legale:</strong> <span id="propContactAddress">N/A</span></div>
+                        </div>
+                    </div>
+
+                    <!-- Synergy & Summary -->
+                    <div class="grid" style="margin-bottom: 1.5rem;">
+                        <div>
+                            <h5 style="border-bottom: 1px solid #e5e7eb; padding-bottom: 0.25rem; color: #111827;">Sintesi Esecutiva</h5>
+                            <p id="propSummary" style="font-size: 0.95rem; line-height: 1.6; text-align: justify;"></p>
+                        </div>
+                        <div>
+                            <h5 style="border-bottom: 1px solid #e5e7eb; padding-bottom: 0.25rem; color: #111827;">Analisi Sinergie</h5>
+                            <p id="propSynergy" style="font-size: 0.95rem; line-height: 1.6; text-align: justify;"></p>
+                        </div>
+                    </div>
+
+                    <!-- Impact & TRL Info -->
+                    <div style="margin-bottom: 1.5rem;">
+                        <h5 style="border-bottom: 1px solid #e5e7eb; padding-bottom: 0.25rem; color: #111827;">Impatto Innovazione</h5>
+                        <p id="propImpact" style="font-size: 0.95rem; line-height: 1.6;"></p>
+                    </div>
+
+                    <!-- Work Packages -->
+                    <div style="margin-bottom: 1.5rem;">
+                        <h5 style="border-bottom: 1px solid #e5e7eb; padding-bottom: 0.25rem; color: #111827;">Piano di Lavoro (Work Packages)</h5>
+                        <div id="propWorkPackages" style="display: flex; flex-direction: column; gap: 1rem;"></div>
+                    </div>
+
+                    <!-- Risks and Mitigations -->
+                    <div style="margin-bottom: 1.5rem;">
+                        <h5 style="border-bottom: 1px solid #e5e7eb; padding-bottom: 0.25rem; color: #111827;">Rischi e Mitigazioni</h5>
+                        <table class="striped" style="font-size: 0.9rem;">
+                            <thead>
+                                <tr>
+                                    <th>⚠️ Rischio Tecnico/Commerciale</th>
+                                    <th>✅ Strategia di Mitigazione</th>
+                                </tr>
+                            </thead>
+                            <tbody id="propRisks"></tbody>
+                        </table>
+                    </div>
+
+                    <!-- Next Steps -->
+                    <div style="margin-bottom: 1.5rem;">
+                        <h5 style="border-bottom: 1px solid #e5e7eb; padding-bottom: 0.25rem; color: #111827;">Prossimi Passaggi Immediati</h5>
+                        <ol id="propNextSteps" style="padding-left: 1.5rem;"></ol>
+                    </div>
+                </div>
+                
+                <footer style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; padding-top: 1rem; border-top: 1px solid #e5e7eb;">
+                    <div>
+                        <button class="outline" id="btnRegenerate" onclick="regenerateProposal()" style="padding: 0.5rem 1rem; margin: 0; font-size: 0.9rem;">🔄 Rigenera</button>
+                    </div>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <button class="outline" id="btnCopy" onclick="copyProposal()" style="padding: 0.5rem 1rem; margin: 0; font-size: 0.9rem;">📋 Copia</button>
+                        <button class="outline" id="btnDownload" onclick="downloadProposalJson()" style="padding: 0.5rem 1rem; margin: 0; font-size: 0.9rem;">💾 Scarica JSON</button>
+                        <button class="secondary" onclick="closeProposalModal()" style="padding: 0.5rem 1rem; margin: 0; font-size: 0.9rem; background-color: #6b7280; border-color: #6b7280;">Chiudi</button>
+                    </div>
+                </footer>
+            </article>
+        </dialog>
+        
+        <!-- Dialog Modal for Gatekeepers / Alumni Search -->
+        <dialog id="gatekeeperModal">
+            <article style="max-width: 750px; width: 95%;">
+                <header>
+                    <button aria-label="Close" rel="prev" onclick="closeGatekeeperModal()"></button>
+                    <h3 style="margin: 0;">Gatekeeper & Alumni UNIBO</h3>
+                </header>
+                
+                <div id="gkModalLoader" style="display: none; text-align: center; padding: 2rem 0;">
+                    <span aria-busy="true">Ricerca ex studenti e contatti chiave in corso...</span>
+                </div>
+                
+                <div id="gkModalContent" style="display: none; max-height: 60vh; overflow-y: auto;">
+                    <!-- Company Card -->
+                    <div style="background: rgba(187, 46, 41, 0.1); border: 1px solid rgba(187, 46, 41, 0.2); border-radius: 0.5rem; padding: 1rem; margin-bottom: 1.5rem;">
+                        <h4 id="gkCompanyTitle" style="margin: 0; color: #bb2e29;"></h4>
+                        <p style="margin: 0.3rem 0 0 0; font-size: 0.85rem; color: #4b5563;">
+                            Di seguito sono mostrati i profili LinkedIn di ex studenti (Alumni) dell'Università di Bologna e contatti accademici chiave legati a questa azienda. Possono agire da intermediari ("gatekeeper") per facilitare la proposta del brevetto.
+                        </p>
+                    </div>
+
+                    <!-- Alert for Mock Data if applicable -->
+                    <div id="gkMockAlert" style="display: none; background: #fffbeb; border: 1px solid #fef3c7; color: #b45309; border-radius: 0.5rem; padding: 0.75rem; margin-bottom: 1.5rem; font-size: 0.85rem; align-items: center; gap: 0.5rem;">
+                        <span><strong>Modalità Simulazione (Mock):</strong> Chiavi API di Google non configurate nel file <code>.env</code>. Vengono mostrati profili accademici e professionali generati automaticamente per scopi dimostrativi.</span>
+                    </div>
+
+                    <!-- Direct LinkedIn Search Button -->
+                    <div style="margin-bottom: 1.5rem;">
+                        <a id="gkDirectSearchBtn" href="#" target="_blank" role="button" style="padding: 0.6rem 1rem; font-size: 0.85rem; background-color: #0a66c2; border: 1px solid #0a66c2; color: #ffffff; text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem; width: 100%; justify-content: center; font-weight: bold; margin: 0; border-radius: 4px;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 24 24" style="vertical-align: middle;">
+                                <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.779-1.75-1.75s.784-1.75 1.75-1.75 1.75.779 1.75 1.75-.784 1.75-1.75 1.75zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
+                            </svg>
+                            Apri ricerca diretta su LinkedIn (Persone Reali)
+                        </a>
+                    </div>
+
+                    <!-- List of Gatekeepers -->
+                    <div id="gkList" style="display: flex; flex-direction: column; gap: 1rem;">
+                        <!-- dynamic items will go here -->
+                    </div>
+                </div>
+                
+                <footer style="display: flex; justify-content: flex-end; padding-top: 1rem; border-top: 1px solid #e5e7eb; margin-top: 1.5rem;">
+                    <button class="secondary" onclick="closeGatekeeperModal()" style="padding: 0.5rem 1rem; margin: 0; font-size: 0.9rem; background-color: #6b7280; border-color: #6b7280;">Chiudi</button>
+                </footer>
+            </article>
+        </dialog>
     </main>
 
+    <footer style="background-color: #bb2e29; color: #ffffff; padding: 0; font-size: 0.8rem; font-family: 'Inter', sans-serif; width: 100%;">
+        <!-- Sezione Follow Us (Social & App) - Rosso Chiaro UNIBO (#bb2e29) -->
+        <div class="container" style="max-width: 1000px; margin: 0 auto; padding: 2rem 1rem;">
+            <div style="display: flex; justify-content: space-between; flex-wrap: wrap; gap: 2rem;">
+                <div>
+                    <p style="color: #ffffff; font-weight: bold; margin-bottom: 0.5rem; font-size: 0.85rem; margin-top: 0; text-transform: uppercase; letter-spacing: 0.5px;">Seguici su:</p>
+                    <div style="display: flex; gap: 1.5rem; flex-wrap: wrap;">
+                        <a href="https://www.instagram.com/unibo/" target="_blank" style="color: #ffffff; text-decoration: none; font-weight: 500;">Instagram</a>
+                        <a href="https://www.linkedin.com/school/unibo/" target="_blank" style="color: #ffffff; text-decoration: none; font-weight: 500;">LinkedIn</a>
+                        <a href="https://www.facebook.com/unibo.it" target="_blank" style="color: #ffffff; text-decoration: none; font-weight: 500;">Facebook</a>
+                        <a href="https://www.youtube.com/user/UniBologna" target="_blank" style="color: #ffffff; text-decoration: none; font-weight: 500;">YouTube</a>
+                    </div>
+                </div>
+                <div>
+                    <p style="color: #ffffff; font-weight: bold; margin-bottom: 0.5rem; font-size: 0.85rem; margin-top: 0; text-transform: uppercase; letter-spacing: 0.5px;">App d'Ateneo:</p>
+                    <div style="display: flex; gap: 1.5rem; flex-wrap: wrap;">
+                        <a href="https://www.unibo.it/it/ateneo/le-app-delluniversita-di-bologna/app-myunibo" target="_blank" style="color: #ffffff; text-decoration: none; font-weight: 500;">myUniBo</a>
+                        <a href="https://www.unibo.it/it/ateneo/le-app-delluniversita-di-bologna/app-myalmaorienta" target="_blank" style="color: #ffffff; text-decoration: none; font-weight: 500;">myAlmaOrienta</a>
+                        <a href="https://www.unibo.it/it/ateneo/le-app-delluniversita-di-bologna/app-job-placement-unibo" target="_blank" style="color: #ffffff; text-decoration: none; font-weight: 500;">myJobPlacement</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sezione Link Istituzionali e Copyright - Rosso Scuro UNIBO (#a12823) -->
+        <div style="background-color: #a12823; padding: 2.5rem 0 2rem 0; width: 100%;">
+            <div class="container" style="max-width: 1000px; margin: 0 auto; padding: 0 1rem;">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 2rem; border-bottom: 1px solid rgba(255, 255, 255, 0.15); padding-bottom: 2rem; margin-bottom: 1.5rem; line-height: 1.8;">
+                    <div>
+                        <div style="color: #ffffff; font-weight: bold; margin-bottom: 0.75rem; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">Ateneo</div>
+                        <ul style="list-style: none; padding: 0; margin: 0;">
+                            <li><a href="https://www.unibo.it/it/ateneo/contatti" target="_blank" style="color: rgba(255, 255, 255, 0.85); text-decoration: none;">Contatti e PEC</a></li>
+                            <li><a href="https://www.unibo.it/it/ateneo/organizzazione-e-sedi/amministrazione-generale" target="_blank" style="color: rgba(255, 255, 255, 0.85); text-decoration: none;">Uffici Amministrazione Generale</a></li>
+                            <li><a href="https://www.unibo.it/it/ateneo/lavora-con-noi" target="_blank" style="color: rgba(255, 255, 255, 0.85); text-decoration: none;">Lavora con noi</a></li>
+                        </ul>
+                    </div>
+                    <div>
+                        <div style="color: #ffffff; font-weight: bold; margin-bottom: 0.75rem; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">Società & Innovazione</div>
+                        <ul style="list-style: none; padding: 0; margin: 0;">
+                            <li><a href="https://site.unibo.it/alumni-association/it" target="_blank" style="color: rgba(255, 255, 255, 0.85); text-decoration: none;">Alumni Community</a></li>
+                            <li><a href="https://pianostrategico.unibo.it/it" target="_blank" style="color: rgba(255, 255, 255, 0.85); text-decoration: none;">Piano Strategico</a></li>
+                            <li><a href="https://bandi.unibo.it/" target="_blank" style="color: rgba(255, 255, 255, 0.85); text-decoration: none;">Bandi, gare e concorsi</a></li>
+                        </ul>
+                    </div>
+                    <div>
+                        <div style="color: #ffffff; font-weight: bold; margin-bottom: 0.75rem; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">Trasparenza & Privacy</div>
+                        <ul style="list-style: none; padding: 0; margin: 0;">
+                            <li><a href="https://www.unibo.it/it/ateneo/amministrazione-trasparente" target="_blank" style="color: rgba(255, 255, 255, 0.85); text-decoration: none;">Amministrazione Trasparente</a></li>
+                            <li><a href="https://www.unibo.it/it/ateneo/privacy-e-note-legali" target="_blank" style="color: rgba(255, 255, 255, 0.85); text-decoration: none;">Privacy e note legali</a></li>
+                            <li><a href="https://www.unibo.it/it/ateneo/privacy-e-note-legali#sezione-cookie" target="_blank" style="color: rgba(255, 255, 255, 0.85); text-decoration: none;">Informativa Cookie</a></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Copyright Row -->
+                <div style="display: flex; justify-content: space-between; flex-wrap: wrap; gap: 1rem; align-items: center; color: rgba(255, 255, 255, 0.7); font-size: 0.75rem; line-height: 1.5;">
+                    <p style="margin: 0;">
+                        © Copyright 2026 - ALMA MATER STUDIORUM - Università di Bologna - Via Zamboni, 33 - 40126 Bologna
+                    </p>
+                    <p style="margin: 0;">
+                        PI: 01131710376 - CF: 80007010376
+                    </p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
     <script>
+        let currentResults = [];
+        let allPatents = [];
+        let activePatentId = null;
+
+        // Load patents list on page load
+        loadPatents();
+        window.addEventListener('DOMContentLoaded', () => {
+            loadPatents();
+            
+            // Add input listener to show the official portal link instantly when selecting
+            document.getElementById('patent_search').addEventListener('input', (e) => {
+                const selectedTitle = e.target.value;
+                const matchedPatent = allPatents.find(p => p.title === selectedTitle);
+                const searchLinkContainer = document.getElementById('patentSearchLinkContainer');
+                const searchLink = document.getElementById('patentSearchLink');
+                
+                if (matchedPatent && matchedPatent.url) {
+                    searchLink.href = matchedPatent.url;
+                    searchLinkContainer.style.display = 'block';
+                } else {
+                    searchLinkContainer.style.display = 'none';
+                }
+            });
+        });
+
+        async function loadPatents() {
+            try {
+                const res = await fetch('/api/v1/patents?_t=' + new Date().getTime());
+                if (res.ok) {
+                    allPatents = await res.json();
+                    populatePatentDatalist(allPatents);
+                    filterAccordionPatents(); // Inizializza i conteggi ed elenchi nell'accordion
+                }
+            } catch (err) {
+                console.error("Errore caricamento brevetti:", err);
+            }
+        }
+
+        function populatePatentDatalist(patents) {
+            const datalist = document.getElementById('patentList');
+            datalist.innerHTML = '';
+            patents.forEach(p => {
+                const option = document.createElement('option');
+                option.value = p.title;
+                datalist.appendChild(option);
+            });
+        }
+
+        // Funzione di classificazione dei brevetti basata sulla mappatura reale scraped da UNIBO
+        function classifyPatent(schedaId) {
+            if (typeof UNIBO_MAPPING !== 'undefined' && UNIBO_MAPPING[schedaId]) {
+                return UNIBO_MAPPING[schedaId];
+            }
+            return "Industria, Digitale e Sicurezza";
+        }
+
+        // Helper per estrarre l'anno di deposito dal numero brevetto o domanda
+        function getPatentYear(p) {
+            const num = p.patent_number || p.application_number || "";
+            const match = num.match(/^10(\d{4})/);
+            if (match) return match[1];
+            
+            const numMatch = num.match(/(20\d{2})/);
+            if (numMatch) return numMatch[1];
+            
+            return "2024";
+        }
+
+        // Toggles Accordion Row
+        function toggleAccordion(categoryName, headerElement) {
+            const wrapper = headerElement.closest('.accordion-row-wrapper');
+            const isActive = wrapper.classList.contains('active');
+            
+            // Chiude gli altri pannelli a discesa
+            document.querySelectorAll('.accordion-row-wrapper').forEach(row => {
+                row.classList.remove('active');
+            });
+            
+            if (!isActive) {
+                wrapper.classList.add('active');
+                setTimeout(() => {
+                    wrapper.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }, 100);
+            }
+        }
+
+        // Filtra ed aggiorna gli elenchi dell'accordion
+        function filterAccordionPatents() {
+            const selectedYear = "Tutti";
+            const searchEl = document.getElementById('patentAccordionSearch');
+            const searchQuery = searchEl ? searchEl.value.toLowerCase().trim() : "";
+            
+            // 1. Filtra i brevetti
+            const filteredPatents = allPatents.filter(p => {
+                
+                if (searchQuery) {
+                    const titleMatch = p.title && p.title.toLowerCase().includes(searchQuery);
+                    const idMatch = p.scheda_id && p.scheda_id.toLowerCase().includes(searchQuery);
+                    if (!titleMatch && !idMatch) return false;
+                }
+                
+                return true;
+            });
+            
+            // Aggiorna totale contatore
+            document.getElementById('patentTotalCount').innerText = `${filteredPatents.length} brevetti`;
+            
+            // 2. Suddivide nei 5 gruppi ufficiali del sito
+            const categoryGroups = {
+                "Bioeconomia, Agricoltura e Ambiente": [],
+                "Clima, Energia e Mobilità": [],
+                "Industria, Digitale e Sicurezza": [],
+                "Salute": [],
+                "Varietà vegetali": []
+            };
+            
+            filteredPatents.forEach(p => {
+                const cat = classifyPatent(p.scheda_id);
+                if (categoryGroups[cat]) {
+                    categoryGroups[cat].push(p);
+                }
+            });
+            
+            // 3. Renderizza gli elenchi e i badge numerici
+            const config = [
+                { key: "Bioeconomia, Agricoltura e Ambiente", panelId: "panel-bioeconomia", countId: "count-bioeconomia" },
+                { key: "Clima, Energia e Mobilità", panelId: "panel-clima", countId: "count-clima" },
+                { key: "Industria, Digitale e Sicurezza", panelId: "panel-industria", countId: "count-industria" },
+                { key: "Salute", panelId: "panel-salute", countId: "count-salute" },
+                { key: "Varietà vegetali", panelId: "panel-varieta", countId: "count-varieta" }
+            ];
+            
+            config.forEach(item => {
+                const list = categoryGroups[item.key];
+                const countBadge = document.getElementById(item.countId);
+                const panel = document.getElementById(item.panelId);
+                
+                countBadge.innerText = list.length;
+                panel.innerHTML = '';
+                
+                if (list.length === 0) {
+                    panel.innerHTML = `<div style="color: #6b7280; font-size: 0.85rem; font-style: italic; padding: 0.5rem 0;">Nessun brevetto corrispondente trovato.</div>`;
+                } else {
+                    list.sort((a, b) => a.title.localeCompare(b.title));
+                    const fragment = document.createDocumentFragment();
+                    list.forEach(p => {
+                        const div = document.createElement('div');
+                        div.className = 'patent-list-item';
+                        div.innerHTML = `
+                            <div style="font-weight: 600; color: #212529; font-size: 0.9rem; line-height: 1.4;">${p.title}</div>
+                            <div style="font-size: 0.72rem; color: #bb2e29; margin-top: 0.2rem; font-family: 'Inter', sans-serif; font-weight: 500;">ID Brevetto: ${p.scheda_id}</div>
+                        `;
+                        div.onclick = () => triggerScoutingForPatent(p.title);
+                        fragment.appendChild(div);
+                    });
+                    panel.appendChild(fragment);
+                }
+            });
+        }
+
+        // Popola l'input di ricerca senza avviare lo scouting automaticamente
+        function triggerScoutingForPatent(patentTitle) {
+            const searchInput = document.getElementById('patent_search');
+            searchInput.value = patentTitle;
+            
+            // Scorre verso l'alto per mostrare il brevetto selezionato nel box di ricerca
+            searchInput.scrollIntoView({ behavior: 'smooth' });
+            
+            // Mette a fuoco il campo di ricerca
+            searchInput.focus();
+            
+            // Dispatch input event to trigger the link display update
+            searchInput.dispatchEvent(new Event('input'));
+        }
+
         document.getElementById('scoutForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
-            const patentId = document.getElementById('patent_id').value;
+            const selectedTitle = document.getElementById('patent_search').value;
+            const matchedPatent = allPatents.find(p => p.title === selectedTitle);
+            
+            if (!matchedPatent) {
+                alert("Seleziona un brevetto valido inserendo il titolo suggerito.");
+                return;
+            }
+            activePatentId = matchedPatent.scheda_id;
             const language = document.getElementById('language').value;
             const loader = document.getElementById('loader');
             const results = document.getElementById('results');
             const submitBtn = document.getElementById('submitBtn');
-            const tbodyGroup1 = document.querySelector('#tableGroup1 tbody');
-            const tbodyGroup2 = document.querySelector('#tableGroup2 tbody');
+            const listGroup1 = document.getElementById('listGroup1');
+            const listGroup2 = document.getElementById('listGroup2');
             
             // UI Reset
+            document.getElementById('searchView').style.display = 'none';
             results.style.display = 'none';
             loader.style.display = 'block';
             submitBtn.setAttribute('aria-busy', 'true');
             submitBtn.disabled = true;
-            tbodyGroup1.innerHTML = '';
-            tbodyGroup2.innerHTML = '';
+            listGroup1.innerHTML = '';
+            listGroup2.innerHTML = '';
 
             try {
                 const response = await fetch('/api/scout', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        Patent_ID: patentId,
+                        Patent_ID: activePatentId,
                         Language: language
                     })
                 });
@@ -169,14 +1159,32 @@
                     throw new Error(data.error || 'Errore durante la richiesta');
                 }
 
-                // Render Tables
-                renderTable(tbodyGroup1, data.group_1);
-                renderTable(tbodyGroup2, data.group_2);
+                // Store results globally for modal contact display
+                currentResults = [...(data.group_1 || []), ...(data.group_2 || [])];
+ 
+                // Render Patent Title
+                document.getElementById('displayPatentTitle').innerText = data.patent_title || 'N/A';
+                
+                // Render Patent URL Link if available in the results card
+                const urlContainer = document.getElementById('displayPatentUrlContainer');
+                const urlLink = document.getElementById('displayPatentUrl');
+                if (data.patent_url) {
+                    urlLink.href = data.patent_url;
+                    urlContainer.style.display = 'block';
+                } else {
+                    urlContainer.style.display = 'none';
+                }
+
+                // Render Company Lists
+                renderCompanyList(listGroup1, data.group_1);
+                renderCompanyList(listGroup2, data.group_2);
                 
                 results.style.display = 'block';
+                switchGroup('group1');
                 
             } catch (error) {
                 alert(`Errore: ${error.message}`);
+                document.getElementById('searchView').style.display = 'block';
             } finally {
                 loader.style.display = 'none';
                 submitBtn.removeAttribute('aria-busy');
@@ -184,25 +1192,674 @@
             }
         });
 
-        function renderTable(tbody, dataList) {
+        function renderCompanyList(container, dataList) {
             if (!dataList || dataList.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" class="text-center">Nessun risultato trovato in questo gruppo.</td></tr>';
+                container.innerHTML = '<div style="text-align: center; color: #6b7280; padding: 2rem 0; font-style: italic;">Nessun risultato trovato in questo gruppo.</div>';
                 return;
             }
 
             dataList.forEach(item => {
                 const simClass = item.similarity_desc >= 0.5 ? 'badge-success' : 'badge-warning';
                 
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td><strong>${item.company_name}</strong></td>
-                    <td><small>${item.tax_code}</small></td>
-                    <td>${item.location_province}</td>
-                    <td><span class="badge ${simClass}">${(item.similarity_desc * 100).toFixed(1)}%</span></td>
-                    <td><strong>${item.rnd_intensity.toFixed(4)}</strong></td>
+                // Render contact links/badges under the company name if available
+                let contactsHtml = "";
+                if (item.contacts) {
+                    if (item.contacts.website) {
+                        const url = item.contacts.website.startsWith('http') ? item.contacts.website : 'http://' + item.contacts.website;
+                        contactsHtml += `<a href="${url}" target="_blank" style="font-size: 0.75rem; margin-right: 0.8rem; display: inline-flex; align-items: center; gap: 0.25rem; text-decoration: none; color: #bb2e29; font-weight: 600;">🌐 Sito Web</a>`;
+                    }
+                    if (item.contacts.phone) {
+                        contactsHtml += `<span style="font-size: 0.75rem; color: #6b7280; margin-right: 0.8rem; display: inline-flex; align-items: center; gap: 0.25rem;">📞 ${item.contacts.phone}</span>`;
+                    }
+                }
+                
+                const provinceHtml = item.contacts && item.contacts.address 
+                    ? `<span style="border-bottom: 1px dashed #9ca3af; cursor: help;" title="${item.contacts.address}">${item.location_province}</span>`
+                    : `<span>${item.location_province}</span>`;
+                
+                const row = document.createElement('div');
+                row.className = 'company-row';
+                row.innerHTML = `
+                    <div style="flex: 2; min-width: 250px;">
+                        <h4 style="margin: 0 0 0.5rem 0; font-family: 'Merriweather', serif; font-size: 1.2rem; color: #111827; font-weight: 700;">${item.company_name}</h4>
+                        <div style="display: flex; gap: 1rem; font-size: 0.8rem; color: #4b5563; flex-wrap: wrap; margin-bottom: 0.4rem;">
+                            <span><strong>Cod. Fiscale:</strong> ${item.tax_code}</span>
+                            <span><strong>Provincia:</strong> ${provinceHtml}</span>
+                        </div>
+                        ${contactsHtml ? `<div style="display: flex; gap: 0.8rem; flex-wrap: wrap; align-items: center;">${contactsHtml}</div>` : ""}
+                    </div>
+                    
+                    <div style="flex: 1; min-width: 160px; display: flex; gap: 1.5rem; justify-content: flex-start; align-items: center;">
+                        <div>
+                            <div style="font-size: 0.65rem; text-transform: uppercase; color: #6b7280; font-weight: 700; letter-spacing: 0.5px; margin-bottom: 0.2rem; font-family: 'Inter', sans-serif;">Similarità</div>
+                            <span class="badge ${simClass}" style="font-size: 0.8rem; padding: 0.25rem 0.5rem; font-weight: 600;">${(item.similarity_desc * 100).toFixed(1)}%</span>
+                        </div>
+                        <div>
+                            <div style="font-size: 0.65rem; text-transform: uppercase; color: #6b7280; font-weight: 700; letter-spacing: 0.5px; margin-bottom: 0.2rem; font-family: 'Inter', sans-serif;">Indice R&D</div>
+                            <strong style="font-size: 1.05rem; color: #2e7d32; font-family: 'Inter', sans-serif;">${item.rnd_intensity.toFixed(4)}</strong>
+                        </div>
+                    </div>
+                    
+                    <div style="flex: 1.2; min-width: 280px; display: flex; gap: 0.4rem; justify-content: flex-end; align-items: center; flex-wrap: wrap;">
+                        <button style="padding: 0.35rem 0.75rem; font-size: 0.75rem; margin: 0; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; height: auto;" onclick="openProposalModal('${item.tax_code}')">Proposta</button>
+                        <button class="outline" style="padding: 0.35rem 0.75rem; font-size: 0.75rem; margin: 0; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; border-color: #0a66c2; color: #0a66c2; display: inline-flex; align-items: center; gap: 0.3rem; height: auto;" onclick="openGatekeeperModal('${item.tax_code}')">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="#0a66c2" viewBox="0 0 24 24" style="vertical-align: middle;">
+                                <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.779-1.75-1.75s.784-1.75 1.75-1.75 1.75.779 1.75 1.75-.784 1.75-1.75 1.75zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
+                            </svg>
+                            Gatekeeper
+                        </button>
+                        <button class="outline secondary" style="padding: 0.35rem 0.75rem; font-size: 0.75rem; margin: 0; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; border-color: #6b7280; color: #6b7280; display: inline-flex; align-items: center; gap: 0.3rem; height: auto;" onclick="openAidaModal('${item.tax_code}')">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" style="vertical-align: middle;">
+                                <line x1="18" y1="20" x2="18" y2="10"></line>
+                                <line x1="12" y1="20" x2="12" y2="4"></line>
+                                <line x1="6" y1="20" x2="6" y2="14"></line>
+                            </svg>
+                            Dati AIDA
+                        </button>
+                    </div>
                 `;
-                tbody.appendChild(tr);
+                container.appendChild(row);
             });
+        }
+
+        let activeCompanyId = null;
+        let currentProposal = null;
+
+        function openProposalModal(companyId) {
+            try {
+                activeCompanyId = companyId;
+                const modal = document.getElementById('proposalModal');
+                if (!modal) {
+                    alert("Elemento modal 'proposalModal' non trovato nel DOM.");
+                    return;
+                }
+                modal.showModal();
+                
+                // Popolamento contatti dell'azienda nel modal
+                const comp = currentResults.find(c => c.tax_code === companyId);
+                const contactCard = document.getElementById('propCompanyContacts');
+                if (contactCard) {
+                    if (comp && comp.contacts && (comp.contacts.website || comp.contacts.phone || comp.contacts.address)) {
+                        const webEl = document.getElementById('propContactWebsite');
+                        if (webEl) {
+                            webEl.innerHTML = comp.contacts.website 
+                                ? `<a href="${comp.contacts.website.startsWith('http') ? comp.contacts.website : 'http://' + comp.contacts.website}" target="_blank" style="color: #bb2e29; font-weight: 600;">${comp.contacts.website}</a>` 
+                                : 'N/A';
+                        }
+                        const phoneEl = document.getElementById('propContactPhone');
+                        if (phoneEl) phoneEl.innerText = comp.contacts.phone || 'N/A';
+                        const addrEl = document.getElementById('propContactAddress');
+                        if (addrEl) addrEl.innerText = comp.contacts.address || 'N/A';
+                        contactCard.style.display = 'block';
+                    } else {
+                        contactCard.style.display = 'none';
+                    }
+                }
+                
+                fetchProposal(companyId, false);
+            } catch (err) {
+                alert("Errore in openProposalModal: " + err.message + "\nStack: " + err.stack);
+            }
+        }
+
+        function closeProposalModal() {
+            try {
+                const modal = document.getElementById('proposalModal');
+                if (modal) modal.close();
+            } catch (err) {
+                console.error("Errore in closeProposalModal:", err);
+            }
+        }
+
+        async function fetchProposal(companyId, force) {
+            const loader = document.getElementById('modalLoader');
+            const content = document.getElementById('modalContent');
+            const btnRegen = document.getElementById('btnRegenerate');
+
+            if (loader) loader.style.display = 'block';
+            if (content) content.style.display = 'none';
+            if (btnRegen) btnRegen.disabled = true;
+
+            try {
+                const patentId = activePatentId;
+                if (!patentId) {
+                    throw new Error("L'ID del brevetto non è stato memorizzato. Riavvia la ricerca dello scouting cliccando su un brevetto dell'elenco.");
+                }
+                const response = await fetch('/api/v1/proposals/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        company_id: companyId,
+                        patent_id: patentId,
+                        force_regenerate: force
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Errore durante la generazione della proposta');
+                }
+
+                currentProposal = data;
+
+                // Popola i valori se gli elementi esistono
+                const titleEl = document.getElementById('propTitle');
+                if (titleEl) titleEl.innerText = data.project_title;
+                
+                const trlEl = document.getElementById('propTrl');
+                if (trlEl) trlEl.innerText = `TRL ${data.current_trl} ➔ ${data.target_trl}`;
+                
+                const durEl = document.getElementById('propDuration');
+                if (durEl) durEl.innerText = `⏱️ ${data.timeline_total_months} Mesi`;
+                
+                const sumEl = document.getElementById('propSummary');
+                if (sumEl) sumEl.innerText = data.executive_summary;
+                
+                const synEl = document.getElementById('propSynergy');
+                if (synEl) synEl.innerText = data.synergy_analysis;
+                
+                const impEl = document.getElementById('propImpact');
+                if (impEl) impEl.innerText = data.innovation_impact;
+
+                // Render Work Packages
+                const wpContainer = document.getElementById('propWorkPackages');
+                wpContainer.innerHTML = '';
+                data.work_packages.forEach(wp => {
+                    const details = document.createElement('details');
+                    details.className = 'card';
+                    details.style.padding = '1rem';
+                    details.style.marginBottom = '0.5rem';
+                    details.style.borderRadius = '0.5rem';
+                    details.style.backgroundColor = '#f9fafb';
+                    details.style.border = '1px solid #e5e7eb';
+                    details.style.boxShadow = 'none';
+                    details.innerHTML = `
+                        <summary style="font-weight: bold; cursor: pointer; color: #111827;">${wp.title} (${wp.duration_months} Mesi)</summary>
+                        <p style="margin-top: 0.5rem; font-size: 0.95rem; text-align: justify; color: #374151;">${wp.description}</p>
+                        <div style="border-top: 1px solid #e5e7eb; padding-top: 0.5rem; margin-top: 0.5rem; font-size: 0.9rem; color: #374151;">
+                            <strong>Output atteso:</strong> <span style="color: #2e7d32; font-weight: 600;">${wp.expected_deliverable}</span>
+                        </div>
+                    `;
+                    wpContainer.appendChild(details);
+                });
+
+                // Render Risks
+                const risksTbody = document.getElementById('propRisks');
+                risksTbody.innerHTML = '';
+                data.risks_and_mitigations.forEach(rm => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td><strong>${rm.risk}</strong></td>
+                        <td style="color: #2e7d32; font-weight: 500;">${rm.mitigation}</td>
+                    `;
+                    risksTbody.appendChild(tr);
+                });
+
+                // Render Next Steps
+                const stepsOl = document.getElementById('propNextSteps');
+                stepsOl.innerHTML = '';
+                data.next_steps.forEach(step => {
+                    const li = document.createElement('li');
+                    li.innerText = step;
+                    stepsOl.appendChild(li);
+                });
+
+                content.style.display = 'block';
+
+            } catch (error) {
+                alert(`Errore: ${error.message}`);
+                closeProposalModal();
+            } finally {
+                loader.style.display = 'none';
+                btnRegen.disabled = false;
+            }
+        }
+
+        function regenerateProposal() {
+            if (activeCompanyId) {
+                fetchProposal(activeCompanyId, true);
+            }
+        }
+
+        function copyProposal() {
+            if (!currentProposal) return;
+            const p = currentProposal;
+            let text = `# Proposta di Progetto: ${p.project_title}\n\n`;
+            text += `## Sintesi Esecutiva\n${p.executive_summary}\n\n`;
+            text += `## Analisi delle Sinergie\n${p.synergy_analysis}\n\n`;
+            text += `## Dettagli TRL e Durata\n- TRL di partenza: ${p.current_trl}\n- TRL obiettivo: ${p.target_trl}\n- Durata: ${p.timeline_total_months} Mesi\n\n`;
+            text += `## Impatto Innovazione\n${p.innovation_impact}\n\n`;
+            text += `## Piano di Lavoro\n`;
+            p.work_packages.forEach(wp => {
+                text += `### ${wp.title} (${wp.duration_months} Mesi)\n- **Attività:** ${wp.description}\n- **Deliverable:** ${wp.expected_deliverable}\n\n`;
+            });
+            text += `## Rischi e Mitigazioni\n`;
+            p.risks_and_mitigations.forEach(rm => {
+                text += `- **Rischio:** ${rm.risk}\n  **Mitigazione:** ${rm.mitigation}\n`;
+            });
+            text += `\n## Prossimi Passaggi\n`;
+            p.next_steps.forEach((step, idx) => {
+                text += `${idx + 1}. ${step}\n`;
+            });
+
+            navigator.clipboard.writeText(text).then(() => {
+                alert("Proposta copiata negli appunti in formato Markdown!");
+            }).catch(err => {
+                alert("Impossibile copiare negli appunti: " + err);
+            });
+        }
+
+        function downloadProposalJson() {
+            if (!currentProposal) return;
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(currentProposal, null, 2));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", `proposta_sinergia_${activeCompanyId}.json`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+        }
+
+        function openGatekeeperModal(companyId) {
+            try {
+                const modal = document.getElementById('gatekeeperModal');
+                if (!modal) {
+                    alert("Elemento modal 'gatekeeperModal' non trovato nel DOM.");
+                    return;
+                }
+                modal.showModal();
+                
+                const comp = currentResults.find(c => c.tax_code === companyId);
+                const titleEl = document.getElementById('gkCompanyTitle');
+                if (titleEl) {
+                    titleEl.innerText = comp ? comp.company_name : 'Azienda';
+                }
+                
+                const directSearchBtn = document.getElementById('gkDirectSearchBtn');
+                if (directSearchBtn) {
+                    const compName = comp ? comp.company_name : '';
+                    directSearchBtn.href = `https://www.linkedin.com/search/results/people/?keywords=${encodeURIComponent(compName + ' "Università di Bologna"')}`;
+                }
+                
+                fetchGatekeepers(companyId);
+            } catch (err) {
+                alert("Errore in openGatekeeperModal: " + err.message);
+            }
+        }
+
+        function closeGatekeeperModal() {
+            try {
+                const modal = document.getElementById('gatekeeperModal');
+                if (modal) modal.close();
+            } catch (err) {
+                console.error("Errore in closeGatekeeperModal:", err);
+            }
+        }
+
+        async function fetchGatekeepers(companyId) {
+            const loader = document.getElementById('gkModalLoader');
+            const content = document.getElementById('gkModalContent');
+            const listContainer = document.getElementById('gkList');
+            const mockAlert = document.getElementById('gkMockAlert');
+            
+            if (!loader || !content || !listContainer) return;
+            
+            loader.style.display = 'block';
+            content.style.display = 'none';
+            listContainer.innerHTML = '';
+            if (mockAlert) mockAlert.style.display = 'none';
+            
+            try {
+                const res = await fetch(`/api/v1/companies/${companyId}/gatekeepers`);
+                if (!res.ok) {
+                    throw new Error('Errore nel recupero dei gatekeeper');
+                }
+                
+                const data = await res.json();
+                
+                if (data.is_mock && mockAlert) {
+                    mockAlert.style.display = 'flex';
+                }
+                
+                if (!data.gatekeepers || data.gatekeepers.length === 0) {
+                    listContainer.innerHTML = '<p class="text-center" style="color: #6b7280; padding: 1rem 0;">Nessun gatekeeper o contatto trovato per questa azienda.</p>';
+                } else {
+                    data.gatekeepers.forEach(gk => {
+                        const card = document.createElement('div');
+                        card.style.background = '#f9fafb';
+                        card.style.border = '1px solid #e5e7eb';
+                        card.style.borderRadius = '0.5rem';
+                        card.style.padding = '1rem';
+                        card.style.display = 'flex';
+                        card.style.flexDirection = 'column';
+                        card.style.gap = '0.5rem';
+                        
+                        const badgeColor = gk.source.includes('Real') ? '#10b981' : '#f59e0b';
+                        const badgeText = gk.source.includes('Real') ? 'LinkedIn Real Match' : 'Simulato';
+                        
+                        card.innerHTML = `
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 0.5rem;">
+                                <strong style="font-size: 1rem; color: #111827;">${gk.name_role}</strong>
+                                <span class="badge" style="background-color: ${badgeColor}; color: white; font-size: 0.7rem; padding: 0.2rem 0.5rem; border-radius: 0.25rem;">${badgeText}</span>
+                            </div>
+                            ${gk.degree ? `<div style="font-size: 0.85rem; color: #bb2e29; font-weight: 500;">${gk.degree}</div>` : ''}
+                            <p style="margin: 0; font-size: 0.9rem; color: #4b5563; line-height: 1.5;">${gk.snippet}</p>
+                            <div style="margin-top: 0.5rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                                <a href="${gk.url}" target="_blank" class="outline" role="button" style="padding: 0.25rem 0.6rem; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 0.3rem; text-decoration: none; border-color: #0a66c2; color: #0a66c2; margin: 0;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 24 24" style="vertical-align: middle;">
+                                        <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.779-1.75-1.75s.784-1.75 1.75-1.75 1.75.779 1.75 1.75-.784 1.75-1.75 1.75zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
+                                    </svg>
+                                    Vedi su LinkedIn / Cerca
+                                </a>
+                                <button class="outline secondary" style="padding: 0.25rem 0.6rem; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 0.3rem; margin: 0; border-color: #4b5563; color: #4b5563;" onclick="copyOutreachTemplate('${gk.name_role.split(' - ')[0]}', '${data.company_name}')">
+                                    Copia Messaggio
+                                </button>
+                            </div>
+                        `;
+                        listContainer.appendChild(card);
+                    });
+                }
+                
+                content.style.display = 'block';
+            } catch (err) {
+                alert(`Errore nel caricamento dei gatekeeper: ${err.message}`);
+                closeGatekeeperModal();
+            } finally {
+                loader.style.display = 'none';
+            }
+        }
+
+        function copyOutreachTemplate(alumniName, companyName) {
+            const patentTitle = document.getElementById('patent_search').value || 'un brevetto universitario';
+            const firstName = alumniName.split(' ')[0];
+            
+            const message = `Ciao ${firstName},\n\nho visto dal tuo profilo LinkedIn che ti sei laureato/a a UNIBO e ora lavori in ${companyName} nell'ambito R&D/tecnologia.\n\nSto collaborando con il Knowledge Transfer Office (KTO) di UNIBO per promuovere e valorizzare un brevetto di ateneo intitolato "${patentTitle}". Siccome lavori proprio in questo settore, mi piacerebbe molto avere un tuo parere professionale rapido per capire se questa tecnologia potrebbe essere d'interesse o integrabile nei vostri processi.\n\nTi andrebbe di fare una chiacchierata informale di pochi minuti o di dare un'occhiata alla scheda tecnica? \n\nUn caro saluto e grazie mille per la disponibilità!`;
+            
+            navigator.clipboard.writeText(message).then(() => {
+                alert(`Messaggio di contatto per ${firstName} copiato negli appunti! Incollalo su LinkedIn.`);
+            }).catch(err => {
+                alert("Impossibile copiare negli appunti: " + err);
+            });
+        }
+
+        function goBackToSearch() {
+            document.getElementById('results').style.display = 'none';
+            document.getElementById('searchView').style.display = 'block';
+            
+            // Inizializza o ripulisce il campo di ricerca per comodità
+            document.getElementById('patent_search').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        let patentAreaChartInstance = null;
+        let companyProvinceChartInstance = null;
+
+        function switchTab(tabName) {
+            const tabMatchmaking = document.getElementById('tabMatchmaking');
+            const tabAnalytics = document.getElementById('tabAnalytics');
+            const searchView = document.getElementById('searchView');
+            const results = document.getElementById('results');
+            const analyticsView = document.getElementById('analyticsView');
+            
+            if (tabName === 'matchmaking') {
+                // Active style for matchmaking button
+                tabMatchmaking.classList.remove('outline');
+                tabMatchmaking.style.backgroundColor = '#bb2e29';
+                tabMatchmaking.style.borderColor = '#bb2e29';
+                tabMatchmaking.style.color = '#ffffff';
+                
+                // Inactive style for analytics button
+                tabAnalytics.classList.add('outline');
+                tabAnalytics.style.backgroundColor = 'transparent';
+                tabAnalytics.style.borderColor = '#6b7280';
+                tabAnalytics.style.color = '#6b7280';
+                
+                // Toggle view
+                analyticsView.style.display = 'none';
+                
+                // Check if a search results page was active
+                const hasResults = results.querySelector('tbody').children.length > 0;
+                if (hasResults && results.style.display !== 'none') {
+                    results.style.display = 'block';
+                    searchView.style.display = 'none';
+                } else {
+                    searchView.style.display = 'block';
+                    results.style.display = 'none';
+                }
+            } else if (tabName === 'analytics') {
+                // Active style for analytics button
+                tabAnalytics.classList.remove('outline');
+                tabAnalytics.style.backgroundColor = '#bb2e29';
+                tabAnalytics.style.borderColor = '#bb2e29';
+                tabAnalytics.style.color = '#ffffff';
+                
+                // Inactive style for matchmaking button
+                tabMatchmaking.classList.add('outline');
+                tabMatchmaking.style.backgroundColor = 'transparent';
+                tabMatchmaking.style.borderColor = '#6b7280';
+                tabMatchmaking.style.color = '#6b7280';
+                
+                // Toggle view
+                searchView.style.display = 'none';
+                results.style.display = 'none';
+                analyticsView.style.display = 'block';
+                
+                // Initialize or resize charts
+                initAnalyticsCharts();
+            }
+        }
+
+        function initAnalyticsCharts() {
+            // Doughnut Chart for Patent Areas
+            const ctxPatent = document.getElementById('patentAreaChart').getContext('2d');
+            if (patentAreaChartInstance) {
+                patentAreaChartInstance.destroy();
+            }
+            patentAreaChartInstance = new Chart(ctxPatent, {
+                type: 'doughnut',
+                data: {
+                    labels: [
+                        'Salute',
+                        'Bioeconomia, Agricoltura e Ambiente',
+                        'Industria, Digitale e Sicurezza',
+                        'Varietà vegetali',
+                        'Clima, Energia e Mobilità'
+                    ],
+                    datasets: [{
+                        data: [87, 61, 59, 25, 18],
+                        backgroundColor: [
+                            '#bb2e29', // Rosso UNIBO
+                            '#2e7d32', // Verde
+                            '#0288d1', // Blu
+                            '#f57c00', // Arancione
+                            '#7e57c2'  // Viola
+                        ],
+                        borderWidth: 1,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                boxWidth: 12,
+                                font: {
+                                    size: 11,
+                                    family: "'Inter', sans-serif"
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Bar Chart for Companies by Province
+            const ctxCompany = document.getElementById('companyProvinceChart').getContext('2d');
+            if (companyProvinceChartInstance) {
+                companyProvinceChartInstance.destroy();
+            }
+            companyProvinceChartInstance = new Chart(ctxCompany, {
+                type: 'bar',
+                data: {
+                    labels: [
+                        'Bologna',
+                        'Modena',
+                        'Reggio Emilia',
+                        'Parma',
+                        'Forlì-Cesena',
+                        'Ravenna',
+                        'Rimini',
+                        'Piacenza',
+                        'Ferrara'
+                    ],
+                    datasets: [{
+                        label: 'Numero Aziende',
+                        data: [2471, 1917, 1397, 1251, 904, 809, 633, 608, 396],
+                        backgroundColor: 'rgba(187, 46, 41, 0.85)',
+                        borderColor: '#bb2e29',
+                        borderWidth: 1,
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: '#f3f4f6'
+                            },
+                            ticks: {
+                                font: {
+                                    family: "'Inter', sans-serif"
+                                }
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                font: {
+                                    size: 10,
+                                    family: "'Inter', sans-serif"
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function switchGroup(groupName) {
+            const btnGroup1 = document.getElementById('btnGroup1');
+            const btnGroup2 = document.getElementById('btnGroup2');
+            const containerGroup1 = document.getElementById('containerGroup1');
+            const containerGroup2 = document.getElementById('containerGroup2');
+
+            if (groupName === 'group1') {
+                btnGroup1.classList.remove('outline');
+                btnGroup1.style.backgroundColor = '#bb2e29';
+                btnGroup1.style.borderColor = '#bb2e29';
+                btnGroup1.style.color = '#ffffff';
+
+                btnGroup2.classList.add('outline');
+                btnGroup2.style.backgroundColor = 'transparent';
+                btnGroup2.style.borderColor = '#6b7280';
+                btnGroup2.style.color = '#6b7280';
+
+                containerGroup1.style.display = 'block';
+                containerGroup2.style.display = 'none';
+            } else if (groupName === 'group2') {
+                btnGroup2.classList.remove('outline');
+                btnGroup2.style.backgroundColor = '#bb2e29';
+                btnGroup2.style.borderColor = '#bb2e29';
+                btnGroup2.style.color = '#ffffff';
+
+                btnGroup1.classList.add('outline');
+                btnGroup1.style.backgroundColor = 'transparent';
+                btnGroup1.style.borderColor = '#6b7280';
+                btnGroup1.style.color = '#6b7280';
+
+                containerGroup1.style.display = 'none';
+                containerGroup2.style.display = 'block';
+            }
+        }
+
+        function openAidaModal(taxCode) {
+            const company = currentResults.find(c => c.tax_code === taxCode);
+            if (!company) {
+                alert("Dati azienda non trovati.");
+                return;
+            }
+            
+            // Populate AIDA details modal fields
+            document.getElementById('aidaCompTitle').innerText = company.company_name;
+            
+            // Anagrafica Generale
+            document.getElementById('aidaTaxCode').innerText = company.tax_code || 'N/A';
+            document.getElementById('aidaCciaa').innerText = company.cciaa_number || 'N/A';
+            document.getElementById('aidaAddress').innerText = (company.contacts && company.contacts.address) || 'N/A';
+            document.getElementById('aidaProvince').innerText = (company.location && company.location.province) || 'N/A';
+            document.getElementById('aidaRegion').innerText = (company.location && company.location.region) || 'N/A';
+            
+            // Contatti
+            document.getElementById('aidaWebsite').innerText = (company.contacts && company.contacts.website) || 'N/A';
+            if (company.contacts && company.contacts.website) {
+                const cleanUrl = company.contacts.website.startsWith('http') ? company.contacts.website : 'http://' + company.contacts.website;
+                document.getElementById('aidaWebsite').innerHTML = `<a href="${cleanUrl}" target="_blank" style="text-decoration: underline; color: #bb2e29; font-weight: 500;">${company.contacts.website}</a>`;
+            }
+            document.getElementById('aidaPhone').innerText = (company.contacts && company.contacts.phone) || 'N/A';
+
+            // Classificazione Industriale
+            const nace = company.industry_classification && company.industry_classification.nace_rev_2;
+            const ateco = company.industry_classification && company.industry_classification.ateco_2007;
+            document.getElementById('aidaNace').innerText = nace ? `${nace.code} - ${nace.description || 'N/A'}` : 'N/A';
+            document.getElementById('aidaAteco').innerText = ateco ? `${ateco.code} - ${ateco.description || 'N/A'}` : 'N/A';
+            
+            // Business Profile
+            document.getElementById('aidaProfileIt').innerText = (company.business_profile && company.business_profile.trade_description_it) || 'N/A';
+            document.getElementById('aidaProfileEn').innerText = (company.business_profile && company.business_profile.trade_description_gb) || 'N/A';
+            
+            // Dati Finanziari
+            const fin = company.financials || {};
+            const rev = fin.revenues_th_eur;
+            document.getElementById('aidaRevenues').innerText = (rev !== undefined && rev !== null) ? `${(rev).toLocaleString('it-IT')} k €` : 'N/A';
+            document.getElementById('aidaEmployees').innerText = fin.employees ? fin.employees.toLocaleString('it-IT') : 'N/A';
+            
+            // R&D Metrics
+            const rndExpenses = fin.rnd_expenses_th_eur;
+            let rndExpStr = 'N/A';
+            if (rndExpenses) {
+                if (rndExpenses.last_available_year !== undefined && rndExpenses.last_available_year !== null) {
+                    rndExpStr = `${(rndExpenses.last_available_year).toLocaleString('it-IT')} k €`;
+                    if (rndExpenses.year_minus_1 !== undefined && rndExpenses.year_minus_1 !== null) {
+                        rndExpStr += ` (Anno prec: ${(rndExpenses.year_minus_1).toLocaleString('it-IT')} k €)`;
+                    }
+                }
+            }
+            document.getElementById('aidaRndExpenses').innerText = rndExpStr;
+            
+            const met = company.metrics || {};
+            document.getElementById('aidaRndIntensity').innerText = (company.rnd_intensity !== undefined && company.rnd_intensity !== null) ? `${(company.rnd_intensity * 100).toFixed(4)}%` : 'N/A';
+            document.getElementById('aidaRndContinuity').innerText = (met.rnd_continuity_score !== undefined && met.rnd_continuity_score !== null) ? met.rnd_continuity_score.toFixed(2) : 'N/A';
+            document.getElementById('aidaRndGrowth').innerText = (met.rnd_growth_3y !== undefined && met.rnd_growth_3y !== null) ? `${(met.rnd_growth_3y * 100).toFixed(2)}%` : 'N/A';
+
+            // Open dialog modal
+            document.getElementById('aidaModal').showModal();
+        }
+        
+        function closeAidaModal() {
+            document.getElementById('aidaModal').close();
         }
     </script>
 </body>

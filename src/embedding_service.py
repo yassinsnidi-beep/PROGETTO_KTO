@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 from typing import Any
 from urllib import request
 
@@ -11,6 +12,8 @@ from src.config import Settings, load_settings
 from src.utils import is_missing
 
 logger = logging.getLogger(__name__)
+
+CACHE_PATH = r"c:\Users\Abdou\Desktop\brev_to_market\data\embeddings_cache.json"
 
 
 class EmbeddingService:
@@ -21,8 +24,10 @@ class EmbeddingService:
         self.enabled = self.settings.generate_embeddings
         self.provider = self.settings.embedding_provider
         self._client = None
+        self.cache: dict[str, list[float]] = {}
         if not self.enabled:
             return
+        self._load_cache()
         if self.provider == "openai":
             self._initialize_openai()
         elif self.provider == "sentence_transformers":
@@ -74,29 +79,70 @@ class EmbeddingService:
             logger.exception("Embedding generation failed for one text")
         return []
 
+    def _load_cache(self) -> None:
+        if os.path.exists(CACHE_PATH):
+            try:
+                with open(CACHE_PATH, "r", encoding="utf-8") as f:
+                    self.cache = json.load(f)
+                logger.info("Loaded %d embeddings from cache", len(self.cache))
+            except Exception:
+                logger.exception("Failed to load embeddings cache")
+                self.cache = {}
+
+    def _save_cache(self) -> None:
+        try:
+            os.makedirs(os.path.dirname(CACHE_PATH), exist_ok=True)
+            with open(CACHE_PATH, "w", encoding="utf-8") as f:
+                json.dump(self.cache, f, ensure_ascii=False)
+        except Exception:
+            logger.exception("Failed to save embeddings cache")
+
     def embed_documents(self, texts: list[str]) -> list[list[float]]:
         """Embed multiple texts, preserving empty slots as empty vectors."""
         if not self.enabled:
             return [[] for _ in texts]
-        non_empty_positions = [idx for idx, text in enumerate(texts) if not is_missing(text)]
-        non_empty_texts = [texts[idx] for idx in non_empty_positions]
+            
         vectors: list[list[float]] = [[] for _ in texts]
-        if not non_empty_texts:
+        non_empty_positions = [idx for idx, text in enumerate(texts) if not is_missing(text)]
+        
+        # Check cache first
+        missing_positions = []
+        missing_texts = []
+        
+        for idx in non_empty_positions:
+            text = texts[idx]
+            if text in self.cache:
+                vectors[idx] = self.cache[text]
+            else:
+                missing_positions.append(idx)
+                missing_texts.append(text)
+                
+        if not missing_texts:
             return vectors
+            
         try:
             if self.provider == "openai":
-                embedded = self._client.embed_documents(non_empty_texts)
+                embedded = self._client.embed_documents(missing_texts)
             elif self.provider == "sentence_transformers":
-                embedded = self._embed_sentence_transformers(non_empty_texts)
+                embedded = self._embed_sentence_transformers(missing_texts)
             elif self.provider == "ollama":
-                embedded = self._embed_ollama(non_empty_texts)
+                embedded = self._embed_ollama(missing_texts)
             else:
                 embedded = []
         except Exception:
             logger.exception("Batch embedding generation failed")
             return vectors
-        for idx, vector in zip(non_empty_positions, embedded):
-            vectors[idx] = list(vector)
+            
+        cache_updated = False
+        for idx, vector in zip(missing_positions, embedded):
+            if vector:
+                vectors[idx] = list(vector)
+                self.cache[texts[idx]] = list(vector)
+                cache_updated = True
+                
+        if cache_updated:
+            self._save_cache()
+            
         return vectors
 
     def _embed_sentence_transformers(self, texts: list[str]) -> list[list[float]]:

@@ -38,6 +38,7 @@ class CompanyDocument(BaseModel):
     financials: dict[str, Any]
     metrics: dict[str, Any]
     data_quality: dict[str, bool]
+    contacts: Optional[dict[str, Any]] = None
     created_at: str
     updated_at: str
 

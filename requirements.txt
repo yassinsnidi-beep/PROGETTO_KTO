@@ -10,3 +10,4 @@ langchain
 langchain-openai
 sentence-transformers
 Flask
+langchain-google-genai

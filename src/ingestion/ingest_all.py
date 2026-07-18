@@ -29,6 +29,7 @@ CATEGORY_EXTENSIONS = {
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Ingest companies, NACE industries and patents into MongoDB Atlas.")
     parser.add_argument("--companies", default=None, help="Optional explicit companies file. Defaults to data/input/companies/*.")
+    parser.add_argument("--companies-control", default=None, help="Optional explicit companies embedding control file. Defaults to *control* in companies folder.")
     parser.add_argument("--industries", default=None, help="Optional explicit industries file. Defaults to data/input/industries/*.")
     parser.add_argument("--patents", default=None, help="Optional explicit patents file. Defaults to data/input/patents/*.")
     parser.add_argument("--input-root", default="data/input")
@@ -66,7 +67,23 @@ def _discover_files(category: str, explicit_path: str | None, input_root: str) -
         return [path] if path.exists() else []
     folder = Path(input_root, category)
     extensions = CATEGORY_EXTENSIONS[category]
-    return sorted(path for path in folder.iterdir() if path.is_file() and path.suffix.lower() in extensions)
+    files = sorted(path for path in folder.iterdir() if path.is_file() and path.suffix.lower() in extensions)
+    if category == "companies":
+        files = [f for f in files if "control" not in f.name.lower() and "controllo" not in f.name.lower() and "embedding" not in f.name.lower()]
+    return files
+
+
+def _discover_control_file(input_root: str) -> Path | None:
+    """Discover a company embedding control file in the input directory."""
+    folder = Path(input_root, "companies")
+    if not folder.exists():
+        return None
+    for file in folder.iterdir():
+        if file.is_file() and file.suffix.lower() in {".xlsx", ".xlsm", ".xls"}:
+            name_lower = file.name.lower()
+            if "control" in name_lower or "controllo" in name_lower or "embedding" in name_lower:
+                return file
+    return None
 
 
 def _move_processed_file(source: Path, destination_root: str, category: str) -> Path:
@@ -90,6 +107,7 @@ def _process_file(
     args: argparse.Namespace,
     db: Any,
     settings: Any,
+    control_path: str | None = None,
 ) -> dict[str, int]:
     """Build, validate, optionally upsert, and route one input file."""
     logger.info("Processing %s file: %s", category, path)
@@ -103,7 +121,10 @@ def _process_file(
     }
     failed = False
     try:
-        documents, stats = builder(str(path), embedding_service, limit=args.limit)
+        builder_kwargs = {}
+        if category == "companies":
+            builder_kwargs["control_path"] = control_path
+        documents, stats = builder(str(path), embedding_service, limit=args.limit, **builder_kwargs)
         result["read"] = stats["read"]
         result["valid"] = stats["valid"]
         result["errors"] = stats["errors"]
@@ -142,6 +163,11 @@ def main() -> None:
     if not args.dry_run:
         db = get_database(settings)
         ensure_indexes(db)
+        # Clear existing companies documents if we are running companies ingestion
+        if not args.skip_companies:
+            logger.info("Clearing existing 'companies' collection from MongoDB...")
+            db["companies"].delete_many({})
+            logger.info("Collection 'companies' cleared successfully!")
 
     summary: dict[str, int] = {
         "companies_read": 0,
@@ -161,6 +187,13 @@ def main() -> None:
         files = _discover_files("companies", args.companies, args.input_root)
         if not files:
             logger.warning("No companies files found")
+        # Discover embedding control file
+        control_path = args.companies_control
+        if not control_path:
+            control_file = _discover_control_file(args.input_root)
+            if control_file:
+                control_path = str(control_file)
+                
         for path in files:
             result = _process_file(
                 category="companies",
@@ -171,6 +204,7 @@ def main() -> None:
                 args=args,
                 db=db,
                 settings=settings,
+                control_path=control_path,
             )
             summary["companies_read"] += result["read"]
             summary["companies_valid"] += result["valid"]
@@ -179,6 +213,14 @@ def main() -> None:
             summary["files_processed"] += 1
             summary["files_archived"] += result["archived"]
             summary["files_moved_to_error"] += result["moved_to_error"]
+            
+        # Move control file to archive or error if processed and routing is enabled
+        if control_path and not args.dry_run and not args.no_move:
+            control_file_path = Path(control_path)
+            if control_file_path.exists():
+                dest_root = args.error_root if summary["errors"] > 0 else args.archive_root
+                moved_to = _move_processed_file(control_file_path, dest_root, "companies")
+                logger.info("Moved company control file to: %s", moved_to)
 
     if not args.skip_industries:
         files = _discover_files("industries", args.industries, args.input_root)

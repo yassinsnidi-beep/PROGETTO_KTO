@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 COMPANY_COLUMN_ALIASES: dict[str, list[str]] = {
     "company_name": ["company name"],
     "province": ["province", "provincia"],
-    "accounting_closing_date": ["accounting closing date"],
+    "accounting_closing_date": ["accounting closing date", "accounting closing date last avail yr"],
     "revenues_th_eur": ["revenues from sales and services th eur last avail yr"],
     "employees": ["number of employees last avail yr"],
     "tax_code": ["tax code number"],

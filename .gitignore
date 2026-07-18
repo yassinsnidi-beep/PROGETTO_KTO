@@ -9,4 +9,6 @@ __pycache__/
 *.db
 .pytest_cache/
 .ipynb_checkpoints/
-.DS_Store
+
+data/embeddings_cache.json
+data/*.json
