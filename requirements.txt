@@ -5,10 +5,7 @@ certifi
 pydantic
 python-dotenv
 numpy
-scikit-learn
-langchain
-langchain-openai
-sentence-transformers
 Flask
+langchain-core
 langchain-google-genai
 gunicorn
