@@ -253,6 +253,52 @@
             box-shadow: 0 4px 12px rgba(187, 46, 41, 0.08);
             transform: translateY(-2px);
         }
+        
+        /* Custom tab buttons container */
+        .tab-btn-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.75rem;
+            margin-bottom: 2rem;
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+        @media (max-width: 992px) {
+            .tab-btn-container {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        @media (max-width: 576px) {
+            .tab-btn-container {
+                grid-template-columns: 1fr;
+            }
+        }
+        .tab-btn-item {
+            margin: 0;
+            padding: 0.75rem 1.25rem;
+            font-size: 0.9rem;
+            font-weight: bold;
+            text-align: center;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+            font-family: 'Inter', sans-serif;
+            border: 2px solid #bb2e29 !important;
+            background-color: transparent !important;
+            color: #bb2e29 !important;
+            box-shadow: none;
+        }
+        .tab-btn-item:hover {
+            background-color: rgba(187, 46, 41, 0.08) !important;
+            color: #9c2420 !important;
+            border-color: #9c2420 !important;
+        }
+        .tab-btn-item.active {
+            background-color: #bb2e29 !important;
+            color: #ffffff !important;
+            border-color: #bb2e29 !important;
+            box-shadow: 0 4px 12px rgba(187, 46, 41, 0.2);
+        }
     </style>
 </head>
 <body>
@@ -279,13 +325,19 @@
         </p>
 
         <!-- Menu Navigazione a Schede (Tabs) -->
-        <div style="display: flex; gap: 1rem; border-bottom: 2px solid #dee2e6; margin-bottom: 2rem; padding-bottom: 0.5rem; flex-wrap: wrap;">
-            <button id="tabMatchmaking" onclick="switchTab('matchmaking')" style="margin: 0; padding: 0.5rem 1.5rem; width: auto; font-size: 0.9rem; font-weight: bold; background-color: #bb2e29; border-color: #bb2e29; color: #ffffff; height: auto;">
+        <div class="tab-btn-container">
+            <div id="tabMatchmaking" onclick="switchTab('matchmaking')" class="tab-btn-item active">
                 Matchmaking Brevetti
-            </button>
-            <button id="tabAnalytics" onclick="switchTab('analytics')" class="outline" style="margin: 0; padding: 0.5rem 1.5rem; width: auto; font-size: 0.9rem; font-weight: bold; background-color: transparent; border-color: #6b7280; color: #6b7280; height: auto;">
+            </div>
+            <div id="tabAnalytics" onclick="switchTab('analytics')" class="tab-btn-item">
                 Dashboard Analytics KTO
-            </button>
+            </div>
+            <div id="tabPartners" onclick="switchTab('partners')" class="tab-btn-item">
+                Rubrica Partner Ateneo
+            </div>
+            <div id="tabAlumni" onclick="switchTab('alumni')" class="tab-btn-item">
+                Rubrica Alumni UNIBO
+            </div>
         </div>
 
         <!-- Nuova Vista Analytics KTO (Dashboard) -->
@@ -306,16 +358,8 @@
                     <div style="font-size: 0.8rem; text-transform: uppercase; color: #6b7280; font-weight: bold; letter-spacing: 0.5px; margin-bottom: 0.5rem; font-family: 'Inter', sans-serif;">
                         Aziende ER
                     </div>
-                    <div style="font-size: 2.2rem; font-weight: 800; color: #bb2e29; line-height: 1;">10.388</div>
+                    <div style="font-size: 2.2rem; font-weight: 800; color: #bb2e29; line-height: 1;">10.188</div>
                     <p style="margin: 0.5rem 0 0 0; font-size: 0.75rem; color: #6b7280;">Aziende mappate in Emilia-Romagna</p>
-                </div>
-                <!-- KPI 3 -->
-                <div style="background: #ffffff; border: 1px solid #dee2e6; border-top: 4px solid #bb2e29; border-radius: 4px; padding: 1.5rem; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.02);">
-                    <div style="font-size: 0.8rem; text-transform: uppercase; color: #6b7280; font-weight: bold; letter-spacing: 0.5px; margin-bottom: 0.5rem; font-family: 'Inter', sans-serif;">
-                        Intensità R&D Media
-                    </div>
-                    <div style="font-size: 2.2rem; font-weight: 800; color: #bb2e29; line-height: 1;">0.19%</div>
-                    <p style="margin: 0.5rem 0 0 0; font-size: 0.75rem; color: #6b7280;">Intensità di spesa in R&D media</p>
                 </div>
                 <!-- KPI 4 -->
                 <div style="background: #ffffff; border: 1px solid #dee2e6; border-top: 4px solid #bb2e29; border-radius: 4px; padding: 1.5rem; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.02);">
@@ -323,7 +367,7 @@
                         Province Coperte
                     </div>
                     <div style="font-size: 2.2rem; font-weight: 800; color: #bb2e29; line-height: 1;">9 / 9</div>
-                    <p style="margin: 0.5rem 0 0 0; font-size: 0.75rem; color: #6b7280;">Presenza su tutto il territorio regionale</p>
+                    <p style="margin: 0.5rem 0 0 0; font-size: 0.75rem; color: #6b7280;">Presenza su tutto il territorio regional</p>
                 </div>
             </div>
 
@@ -350,8 +394,8 @@
                 </article>
             </div>
 
-            <!-- Dettaglio Dati Province e KTO Insights -->
-            <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 2.5rem; flex-wrap: wrap; margin-bottom: 2rem; align-items: start;">
+            <!-- Dettaglio Dati Province (Larghezza Intera) -->
+            <div style="display: grid; grid-template-columns: 1fr; gap: 2.5rem; margin-bottom: 2rem; align-items: start;">
                 <!-- Tabella Dati Province -->
                 <article class="card" style="background-color: #ffffff; border: 1px solid #dee2e6; border-radius: 4px; padding: 2rem; box-shadow: 0 4px 12px rgba(0,0,0,0.02); margin: 0;">
                     <h5 style="font-family: 'Merriweather', serif; font-size: 1.15rem; font-weight: bold; margin-top: 0; margin-bottom: 1rem; color: #212529;">
@@ -415,27 +459,6 @@
                             </tbody>
                         </table>
                     </div>
-                </article>
-
-                <!-- Insights del KTO -->
-                <article class="card" style="background-color: #ffffff; border: 1px solid #dee2e6; border-left: 5px solid #bb2e29; border-radius: 4px; padding: 2rem; box-shadow: 0 4px 12px rgba(0,0,0,0.02); margin: 0; height: 100%;">
-                    <h5 style="font-family: 'Merriweather', serif; font-size: 1.15rem; font-weight: bold; margin-top: 0; margin-bottom: 1rem; color: #212529;">
-                        Key KTO Insights
-                    </h5>
-                    <ul style="padding-left: 1.2rem; font-size: 0.85rem; line-height: 1.6; color: #4b5563; margin: 0; display: flex; flex-direction: column; gap: 0.8rem;">
-                        <li>
-                            <strong>Concentrazione del Network:</strong> Bologna e Modena costituiscono la colonna portante della rete di imprese industriali del KTO, coprendo insieme più del **42.3%** del mercato regionale mappato.
-                        </li>
-                        <li>
-                            <strong>Cluster Leader (Salute):</strong> Con ben **87 brevetti** depositati (34.8% del portafoglio), l'area biomedica e della salute rappresenta la punta di diamante della ricerca UNIBO, ideale per sinergie con il distretto biomedicale di Mirandola (MO).
-                        </li>
-                        <li>
-                            <strong>Bioeconomia e Ambiente:</strong> Rappresenta il secondo cluster per volume (**61 brevetti**), a supporto del tessuto agroalimentare d'eccellenza della Food Valley regionale (Parma, Reggio Emilia, Piacenza).
-                        </li>
-                        <li>
-                            <strong>R&D Intensity:</strong> La spesa media dichiarata in Ricerca & Sviluppo del network aziendale è dello **0.19%**, con picchi elevati in settori industriali tecnologici avanzati e farmaceutici che raggiungono l'**80.4%**.
-                        </li>
-                    </ul>
                 </article>
             </div>
         </div>
@@ -568,6 +591,71 @@
             </div>
         </div>
         </div> <!-- Chiude searchView -->
+
+        <!-- Vista Rubrica Partner Ateneo -->
+        <div id="partnersView" style="display: none;">
+            <article class="card" style="background-color: #ffffff; border: 1px solid #dee2e6; border-radius: 8px; padding: 2rem; margin-bottom: 2rem; box-shadow: 0 4px 20px rgba(0,0,0,0.04);">
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #dee2e6; padding-bottom: 0.5rem; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+                    <h5 style="font-family: 'Merriweather', serif; font-size: 1.35rem; font-weight: bold; margin: 0; color: #111827; display: flex; align-items: center; gap: 0.5rem;">
+                        <span>Rubrica Partner Strategici d'Ateneo</span>
+                        <span id="partnersTotalCount" style="font-size: 0.85rem; background: #fee2e2; color: #bb2e29; padding: 0.2rem 0.6rem; border-radius: 9999px; font-weight: bold; font-family: 'Inter', sans-serif;">...</span>
+                    </h5>
+                </div>
+                <p style="font-family: 'Inter', sans-serif; font-size: 0.9rem; color: #4b5563; margin-bottom: 1.5rem; line-height: 1.6;">
+                    Elenco delle grandi aziende e associazioni che hanno sottoscritto accordi quadro o protocolli di collaborazione strategica con l'Alma Mater Studiorum - Università di Bologna. Clicca su una categoria di settore per espandere e visualizzare le aziende partner associate.
+                </p>
+                
+                <!-- Filtro di ricerca -->
+                <div style="margin-bottom: 2rem; background: #f9fafb; padding: 1.25rem; border-radius: 6px; border: 1px solid #e5e7eb;">
+                    <label for="partnerSearchInput" style="font-size: 0.75rem; text-transform: uppercase; font-weight: bold; color: #6b7280; margin-bottom: 0.35rem; display: block; font-family: 'Inter', sans-serif;">Cerca partner o argomenti</label>
+                    <input type="text" id="partnerSearchInput" oninput="filterPartners()" placeholder="Cerca per nome azienda, temi di ricerca o laboratori..." style="margin-bottom: 0; width: 100%; height: 42px; background: #ffffff; border: 1px solid #d1d5db; border-radius: 4px; padding: 0 0.75rem; font-size: 0.9rem; font-family: 'Inter', sans-serif;">
+                </div>
+
+                <div id="partnersLoader" style="display: none; text-align: center; padding: 3rem 0; font-family: 'Inter', sans-serif; color: #bb2e29;">
+                    <div aria-busy="true" style="font-size: 1.1rem; font-weight: bold; margin-bottom: 0.5rem;">Caricamento partner in corso...</div>
+                    <span style="font-size: 0.85rem; color: #6b7280;">Interrogazione del database in corso...</span>
+                </div>
+                
+                <!-- Contenitore Principale per gli Accordion -->
+                <div id="partnersContainer" style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: 1.5rem;">
+                    <!-- I settori verranno renderizzati qui come pannelli collassabili (accordion) -->
+                </div>
+            </article>
+        </div>
+            </article>
+        </div>
+
+        <!-- Vista Rubrica Alumni UNIBO -->
+        <div id="alumniDirectoryView" style="display: none;">
+            <article class="card" style="background-color: #ffffff; border: 1px solid #dee2e6; border-radius: 4px; padding: 2rem; margin-bottom: 2rem; box-shadow: 0 4px 12px rgba(0,0,0,0.02);">
+                <h5 style="font-family: 'Merriweather', serif; font-size: 1.25rem; font-weight: bold; margin-top: 0; margin-bottom: 1.5rem; color: #212529; border-bottom: 1px solid #dee2e6; padding-bottom: 0.5rem;">
+                    Ricerca nella Rubrica Alumni UNIBO
+                </h5>
+                <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
+                    <input type="text" id="alumniSearchInput" oninput="onAlumniSearchChange()" placeholder="Cerca per nome, cognome, email, azienda, ruolo o corso..." style="margin-bottom: 0; flex: 1; min-width: 250px;">
+                </div>
+                
+                <div id="alumniLoader" style="display: none; text-align: center; padding: 2rem 0; font-family: 'Inter', sans-serif; color: #bb2e29;">
+                    <div aria-busy="true">Caricamento profili in corso...</div>
+                </div>
+
+                <!-- Griglia delle Card degli Alumni -->
+                <div id="alumniGridContainer" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+                    <!-- Le card verranno inserite qui dinamicamente -->
+                </div>
+
+                <!-- Paginazione Alumni -->
+                <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #dee2e6; padding-top: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+                    <button id="btnPrevAlumni" class="outline" onclick="changeAlumniPage(-1)" style="margin: 0; width: auto; padding: 0.5rem 1.2rem; border-color: #bb2e29; color: #bb2e29; font-weight: bold; background: transparent; height: auto;">
+                        ← Precedente
+                    </button>
+                    <span id="alumniPageIndicator" style="font-family: 'Inter', sans-serif; font-size: 0.9rem; color: #4b5563; font-weight: 500;">Pagina 1 di 1</span>
+                    <button id="btnNextAlumni" class="outline" onclick="changeAlumniPage(1)" style="margin: 0; width: auto; padding: 0.5rem 1.2rem; border-color: #bb2e29; color: #bb2e29; font-weight: bold; background: transparent; height: auto;">
+                        Successivo →
+                    </button>
+                </div>
+            </article>
+        </div>
 
         <div id="loader" class="loader" aria-busy="true">Elaborazione in corso, attendere prego...</div>
 
@@ -868,6 +956,22 @@
                 
                 <footer style="display: flex; justify-content: flex-end; padding-top: 1rem; border-top: 1px solid #e5e7eb; margin-top: 1.5rem;">
                     <button class="secondary" onclick="closeGatekeeperModal()" style="padding: 0.5rem 1rem; margin: 0; font-size: 0.9rem; background-color: #6b7280; border-color: #6b7280;">Chiudi</button>
+                </footer>
+            </article>
+        </dialog>
+
+        <!-- Modale per i dettagli di un Alumnus -->
+        <dialog id="alumnusDetailsModal">
+            <article style="max-width: 600px; width: 95%;">
+                <header>
+                    <button aria-label="Close" rel="prev" onclick="closeAlumnusModal()"></button>
+                    <h3 style="margin: 0;" id="modalAlumnusName">Dettagli Profilo Alumnus</h3>
+                </header>
+                <div id="modalAlumnusBody" style="max-height: 60vh; overflow-y: auto; padding-right: 0.5rem;">
+                    <!-- Verrà popolato dinamicamente via JS -->
+                </div>
+                <footer style="display: flex; justify-content: flex-end; padding-top: 1rem; border-top: 1px solid #e5e7eb; margin-top: 1.5rem;">
+                    <button class="secondary" onclick="closeAlumnusModal()" style="padding: 0.5rem 1rem; margin: 0; font-size: 0.9rem; background-color: #6b7280; border-color: #6b7280;">Chiudi</button>
                 </footer>
             </article>
         </dialog>
@@ -1219,9 +1323,16 @@
                 
                 const row = document.createElement('div');
                 row.className = 'company-row';
+                
+                const partnerBadge = item.is_unibo_partner ? 
+                    `<span style="font-size: 0.65rem; text-transform: uppercase; background: #fee2e2; color: #991b1b; padding: 0.15rem 0.45rem; border-radius: 4px; font-weight: bold; display: inline-block; vertical-align: middle; font-family: 'Inter', sans-serif; letter-spacing: 0.5px;">Partner Strategico</span>` : '';
+                
                 row.innerHTML = `
                     <div style="flex: 2; min-width: 250px;">
-                        <h4 style="margin: 0 0 0.5rem 0; font-family: 'Merriweather', serif; font-size: 1.2rem; color: #111827; font-weight: 700;">${item.company_name}</h4>
+                        <h4 style="margin: 0 0 0.5rem 0; font-family: 'Merriweather', serif; font-size: 1.2rem; color: #111827; font-weight: 700; display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+                            <span>${item.company_name}</span>
+                            ${partnerBadge}
+                        </h4>
                         <div style="display: flex; gap: 1rem; font-size: 0.8rem; color: #4b5563; flex-wrap: wrap; margin-bottom: 0.4rem;">
                             <span><strong>Cod. Fiscale:</strong> ${item.tax_code}</span>
                             <span><strong>Provincia:</strong> ${provinceHtml}</span>
@@ -1236,7 +1347,7 @@
                         </div>
                         <div>
                             <div style="font-size: 0.65rem; text-transform: uppercase; color: #6b7280; font-weight: 700; letter-spacing: 0.5px; margin-bottom: 0.2rem; font-family: 'Inter', sans-serif;">Indice R&D</div>
-                            <strong style="font-size: 1.05rem; color: #2e7d32; font-family: 'Inter', sans-serif;">${item.rnd_intensity.toFixed(4)}</strong>
+                            <strong style="font-size: 1.05rem; color: #2e7d32; font-family: 'Inter', sans-serif;">${(item.rnd_intensity * 100).toFixed(4)}%</strong>
                         </div>
                     </div>
                     
@@ -1535,28 +1646,54 @@
                         card.style.flexDirection = 'column';
                         card.style.gap = '0.5rem';
                         
-                        const badgeColor = gk.source.includes('Real') ? '#10b981' : '#f59e0b';
-                        const badgeText = gk.source.includes('Real') ? 'LinkedIn Real Match' : 'Simulato';
-                        
-                        card.innerHTML = `
-                            <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 0.5rem;">
-                                <strong style="font-size: 1rem; color: #111827;">${gk.name_role}</strong>
-                                <span class="badge" style="background-color: ${badgeColor}; color: white; font-size: 0.7rem; padding: 0.2rem 0.5rem; border-radius: 0.25rem;">${badgeText}</span>
-                            </div>
-                            ${gk.degree ? `<div style="font-size: 0.85rem; color: #bb2e29; font-weight: 500;">${gk.degree}</div>` : ''}
-                            <p style="margin: 0; font-size: 0.9rem; color: #4b5563; line-height: 1.5;">${gk.snippet}</p>
-                            <div style="margin-top: 0.5rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                                <a href="${gk.url}" target="_blank" class="outline" role="button" style="padding: 0.25rem 0.6rem; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 0.3rem; text-decoration: none; border-color: #0a66c2; color: #0a66c2; margin: 0;">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 24 24" style="vertical-align: middle;">
-                                        <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.779-1.75-1.75s.784-1.75 1.75-1.75 1.75.779 1.75 1.75-.784 1.75-1.75 1.75zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
-                                    </svg>
-                                    Vedi su LinkedIn / Cerca
-                                </a>
-                                <button class="outline secondary" style="padding: 0.25rem 0.6rem; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 0.3rem; margin: 0; border-color: #4b5563; color: #4b5563;" onclick="copyOutreachTemplate('${gk.name_role.split(' - ')[0]}', '${data.company_name}')">
-                                    Copia Messaggio
-                                </button>
-                            </div>
-                        `;
+                        if (gk.alumnus) {
+                            const badgeColor = '#bb2e29';
+                            const badgeText = 'Alumnus UNIBO';
+                            const alJson = JSON.stringify(gk.alumnus).replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                            
+                            card.innerHTML = `
+                                <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 0.5rem;">
+                                    <strong style="font-size: 1rem; color: #111827; cursor: pointer; text-decoration: underline;" onclick="openAlumnusModalFromJSON('${alJson}')">${gk.name_role}</strong>
+                                    <span class="badge" style="background-color: ${badgeColor}; color: white; font-size: 0.75rem; padding: 0.2rem 0.5rem; border-radius: 0.25rem; font-weight: bold;">${badgeText}</span>
+                                </div>
+                                ${gk.degree ? `<div style="font-size: 0.85rem; color: #bb2e29; font-weight: 500;">${gk.degree}</div>` : ''}
+                                <p style="margin: 0; font-size: 0.9rem; color: #4b5563; line-height: 1.5;">${gk.snippet}</p>
+                                <div style="margin-top: 0.5rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                                    <button class="outline" style="padding: 0.25rem 0.6rem; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 0.3rem; margin: 0; border-color: #bb2e29; color: #bb2e29;" onclick="openAlumnusModalFromJSON('${alJson}')">
+                                        👁️ Vedi Scheda Completa
+                                    </button>
+                                    <a href="${gk.url}" target="_blank" class="outline" role="button" style="padding: 0.25rem 0.6rem; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 0.3rem; text-decoration: none; border-color: #0a66c2; color: #0a66c2; margin: 0; background: transparent; height: auto;">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 24 24" style="vertical-align: middle;">
+                                            <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.779-1.75-1.75s.784-1.75 1.75-1.75 1.75.779 1.75 1.75-.784 1.75-1.75 1.75zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
+                                        </svg>
+                                        Vedi su LinkedIn
+                                    </a>
+                                </div>
+                            `;
+                        } else {
+                            const badgeColor = gk.source.includes('Real') ? '#10b981' : '#f59e0b';
+                            const badgeText = gk.source.includes('Real') ? 'LinkedIn Real Match' : 'Simulato';
+                            
+                            card.innerHTML = `
+                                <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 0.5rem;">
+                                    <strong style="font-size: 1rem; color: #111827;">${gk.name_role}</strong>
+                                    <span class="badge" style="background-color: ${badgeColor}; color: white; font-size: 0.7rem; padding: 0.2rem 0.5rem; border-radius: 0.25rem;">${badgeText}</span>
+                                </div>
+                                ${gk.degree ? `<div style="font-size: 0.85rem; color: #bb2e29; font-weight: 500;">${gk.degree}</div>` : ''}
+                                <p style="margin: 0; font-size: 0.9rem; color: #4b5563; line-height: 1.5;">${gk.snippet}</p>
+                                <div style="margin-top: 0.5rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                                    <a href="${gk.url}" target="_blank" class="outline" role="button" style="padding: 0.25rem 0.6rem; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 0.3rem; text-decoration: none; border-color: #0a66c2; color: #0a66c2; margin: 0; background: transparent; height: auto;">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 24 24" style="vertical-align: middle;">
+                                            <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.779-1.75-1.75s.784-1.75 1.75-1.75 1.75.779 1.75 1.75-.784 1.75-1.75 1.75zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
+                                        </svg>
+                                        Vedi su LinkedIn / Cerca
+                                    </a>
+                                    <button class="outline secondary" style="padding: 0.25rem 0.6rem; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 0.3rem; margin: 0; border-color: #4b5563; color: #4b5563;" onclick="copyOutreachTemplate('${gk.name_role.split(' - ')[0]}', '${data.company_name}')">
+                                        Copia Messaggio
+                                    </button>
+                                </div>
+                            `;
+                        }
                         listContainer.appendChild(card);
                     });
                 }
@@ -1595,57 +1732,61 @@
         let companyProvinceChartInstance = null;
 
         function switchTab(tabName) {
+            // Get all buttons
             const tabMatchmaking = document.getElementById('tabMatchmaking');
             const tabAnalytics = document.getElementById('tabAnalytics');
+            const tabPartners = document.getElementById('tabPartners');
+            const tabAlumni = document.getElementById('tabAlumni');
+            
+            // Get all views
             const searchView = document.getElementById('searchView');
             const results = document.getElementById('results');
             const analyticsView = document.getElementById('analyticsView');
+            const partnersView = document.getElementById('partnersView');
+            const alumniDirectoryView = document.getElementById('alumniDirectoryView');
             
+            // Deactivate all buttons
+            [tabMatchmaking, tabAnalytics, tabPartners, tabAlumni].forEach(btn => {
+                if (btn) btn.classList.remove('active');
+            });
+            
+            // Hide all views
+            [searchView, results, analyticsView, partnersView, alumniDirectoryView].forEach(view => {
+                if (view) view.style.display = 'none';
+            });
+            
+            // Activate selected button and show selected view
             if (tabName === 'matchmaking') {
-                // Active style for matchmaking button
-                tabMatchmaking.classList.remove('outline');
-                tabMatchmaking.style.backgroundColor = '#bb2e29';
-                tabMatchmaking.style.borderColor = '#bb2e29';
-                tabMatchmaking.style.color = '#ffffff';
+                if (tabMatchmaking) tabMatchmaking.classList.add('active');
                 
-                // Inactive style for analytics button
-                tabAnalytics.classList.add('outline');
-                tabAnalytics.style.backgroundColor = 'transparent';
-                tabAnalytics.style.borderColor = '#6b7280';
-                tabAnalytics.style.color = '#6b7280';
+                // Safe check for results
+                const list1 = document.getElementById('listGroup1');
+                const list2 = document.getElementById('listGroup2');
+                const hasResults = (list1 && list1.children.length > 0) || (list2 && list2.children.length > 0);
                 
-                // Toggle view
-                analyticsView.style.display = 'none';
-                
-                // Check if a search results page was active
-                const hasResults = results.querySelector('tbody').children.length > 0;
-                if (hasResults && results.style.display !== 'none') {
+                if (hasResults && results) {
                     results.style.display = 'block';
-                    searchView.style.display = 'none';
-                } else {
+                } else if (searchView) {
                     searchView.style.display = 'block';
-                    results.style.display = 'none';
                 }
             } else if (tabName === 'analytics') {
-                // Active style for analytics button
-                tabAnalytics.classList.remove('outline');
-                tabAnalytics.style.backgroundColor = '#bb2e29';
-                tabAnalytics.style.borderColor = '#bb2e29';
-                tabAnalytics.style.color = '#ffffff';
-                
-                // Inactive style for matchmaking button
-                tabMatchmaking.classList.add('outline');
-                tabMatchmaking.style.backgroundColor = 'transparent';
-                tabMatchmaking.style.borderColor = '#6b7280';
-                tabMatchmaking.style.color = '#6b7280';
-                
-                // Toggle view
-                searchView.style.display = 'none';
-                results.style.display = 'none';
-                analyticsView.style.display = 'block';
-                
-                // Initialize or resize charts
-                initAnalyticsCharts();
+                if (tabAnalytics) tabAnalytics.classList.add('active');
+                if (analyticsView) {
+                    analyticsView.style.display = 'block';
+                    initAnalyticsCharts();
+                }
+            } else if (tabName === 'partners') {
+                if (tabPartners) tabPartners.classList.add('active');
+                if (partnersView) {
+                    partnersView.style.display = 'block';
+                    loadPartners();
+                }
+            } else if (tabName === 'alumni') {
+                if (tabAlumni) tabAlumni.classList.add('active');
+                if (alumniDirectoryView) {
+                    alumniDirectoryView.style.display = 'block';
+                    loadAlumniDirectory(1, "");
+                }
             }
         }
 
@@ -1858,6 +1999,514 @@
             document.getElementById('aidaModal').showModal();
         }
         
+        // --- PARTNERS LOGIC ---
+        let partnersLoaded = false;
+        let allPartnersData = []; // Cache to store all partners loaded from DB
+        let expandedSectors = new Set(); // Set of sector names currently expanded
+
+        async function loadPartners() {
+            if (partnersLoaded) return;
+            const loader = document.getElementById('partnersLoader');
+            const container = document.getElementById('partnersContainer');
+            const totalCountBadge = document.getElementById('partnersTotalCount');
+            if (!loader || !container) return;
+            
+            loader.style.display = 'block';
+            container.innerHTML = '';
+            
+            try {
+                const res = await fetch('/api/v1/partners');
+                if (!res.ok) throw new Error("Errore nel caricamento dei partner");
+                allPartnersData = await res.json();
+                
+                // Set total partners badge count
+                let totalPartners = 0;
+                allPartnersData.forEach(sec => {
+                    totalPartners += sec.partners.length;
+                });
+                if (totalCountBadge) {
+                    totalCountBadge.textContent = `${totalPartners} partner`;
+                }
+
+                // Render all categories collapsed by default at start
+                expandedSectors.clear();
+                renderPartnersList(allPartnersData);
+                partnersLoaded = true;
+                
+            } catch (err) {
+                container.innerHTML = `<div style="padding: 2rem; background: #fee2e2; border: 1px solid #fca5a5; border-radius: 6px; color: #b91c1c; font-family: 'Inter', sans-serif; text-align: center;">
+                    <h6 style="margin: 0 0 0.5rem 0; font-weight: bold;">Si è verificato un errore durante il caricamento dei partner</h6>
+                    <p style="margin: 0; font-size: 0.85rem;">Dettagli: ${err.message}</p>
+                </div>`;
+            } finally {
+                loader.style.display = 'none';
+            }
+        }
+
+        function filterPartners() {
+            const searchQuery = document.getElementById('partnerSearchInput').value.toLowerCase().trim();
+            const totalCountBadge = document.getElementById('partnersTotalCount');
+            
+            let filteredData = [];
+            let matchCount = 0;
+            
+            allPartnersData.forEach(sec => {
+                // Filter partners of this sector by query
+                const filteredPartners = sec.partners.filter(p => {
+                    const name = (p.company_name || '').toLowerCase();
+                    const agr = (p.agreement_type || '').toLowerCase();
+                    
+                    // Robust handling of macro_themes
+                    let themes = '';
+                    if (p.macro_themes) {
+                        if (Array.isArray(p.macro_themes)) {
+                            themes = p.macro_themes.join(' ').toLowerCase();
+                        } else {
+                            themes = p.macro_themes.toLowerCase();
+                        }
+                    }
+                    
+                    // Robust handling of joint_labs
+                    let labs = '';
+                    if (p.joint_labs) {
+                        if (Array.isArray(p.joint_labs)) {
+                            labs = p.joint_labs.join(' ').toLowerCase();
+                        } else {
+                            labs = p.joint_labs.toLowerCase();
+                        }
+                    }
+                    
+                    return name.includes(searchQuery) || 
+                           agr.includes(searchQuery) || 
+                           themes.includes(searchQuery) || 
+                           labs.includes(searchQuery);
+                });
+                
+                if (filteredPartners.length > 0) {
+                    matchCount += filteredPartners.length;
+                    filteredData.push({
+                        sector: sec.sector,
+                        partners: filteredPartners
+                    });
+                }
+            });
+            
+            if (totalCountBadge) {
+                totalCountBadge.textContent = `${matchCount} partner`;
+            }
+            
+            // If searching, auto-expand sectors that match
+            renderPartnersList(filteredData, searchQuery !== '');
+        }
+
+        function renderPartnersList(sectorsData, isSearching = false) {
+            const container = document.getElementById('partnersContainer');
+            if (!container) return;
+            
+            if (sectorsData.length === 0) {
+                container.innerHTML = `<div style="text-align: center; padding: 3rem 1rem; color: #6b7280; font-family: 'Inter', sans-serif;">
+                    <span style="font-size: 2.5rem; display: block; margin-bottom: 1rem;">🔍</span>
+                    <h6 style="margin: 0 0 0.25rem 0; font-weight: bold; color: #374151;">Nessun partner strategico corrisponde ai filtri</h6>
+                    <p style="margin: 0; font-size: 0.85rem;">Prova a cambiare termini di ricerca.</p>
+                </div>`;
+                return;
+            }
+            
+            container.innerHTML = '';
+            
+            sectorsData.forEach(sec => {
+                const sectorId = sec.sector.replace(/[^a-zA-Z0-9]/g, '-');
+                // Always expand matching sectors when user is typing in search
+                const isExpanded = isSearching || expandedSectors.has(sec.sector);
+                
+                const accordionItem = document.createElement('div');
+                accordionItem.style.border = '1px solid #dee2e6';
+                accordionItem.style.borderRadius = '6px';
+                accordionItem.style.overflow = 'hidden';
+                accordionItem.style.marginBottom = '0.5rem';
+                accordionItem.style.boxShadow = '0 1px 3px rgba(0,0,0,0.01)';
+                
+                // Accordion Header
+                const header = document.createElement('div');
+                header.style.background = '#f9fafb';
+                header.style.padding = '1rem 1.25rem';
+                header.style.display = 'flex';
+                header.style.justifyContent = 'space-between';
+                header.style.alignItems = 'center';
+                header.style.cursor = 'pointer';
+                header.style.userSelect = 'none';
+                header.style.transition = 'background 0.2s';
+                
+                header.onmouseover = () => header.style.background = '#f3f4f6';
+                header.onmouseout = () => header.style.background = '#f9fafb';
+                
+                header.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 0.75rem;">
+                        <svg id="sector-chevron-${sectorId}" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" style="transition: transform 0.2s; color: #bb2e29; transform: ${isExpanded ? 'rotate(90deg)' : 'rotate(0deg)'};">
+                            <polyline points="9 18 15 12 9 6"></polyline>
+                        </svg>
+                        <span style="font-family: 'Inter', sans-serif; font-size: 0.95rem; font-weight: 600; color: #1f2937;">${sec.sector}</span>
+                    </div>
+                    <span style="font-size: 0.75rem; background: #e5e7eb; color: #4b5563; padding: 0.15rem 0.5rem; border-radius: 9999px; font-weight: bold; font-family: 'Inter', sans-serif;">
+                        ${sec.partners.length} aziende
+                    </span>
+                `;
+                
+                // Accordion Content (Grid of Cards)
+                const content = document.createElement('div');
+                content.id = `sector-content-${sectorId}`;
+                content.style.display = isExpanded ? 'grid' : 'none';
+                content.style.gridTemplateColumns = 'repeat(auto-fill, minmax(300px, 1fr))';
+                content.style.gap = '1.5rem';
+                content.style.padding = '1.5rem';
+                content.style.background = '#ffffff';
+                content.style.borderTop = '1px solid #dee2e6';
+                
+                let partnerCardsHtml = '';
+                sec.partners.forEach(p => {
+                    const showLink = p.has_aida_data ? 
+                        `<button class="outline" style="padding: 0.4rem 0.85rem; font-size: 0.75rem; margin: 0; font-weight: bold; border-color: #bb2e29; color: #bb2e29; width: auto; height: auto; border-radius: 4px; display: inline-flex; align-items: center; gap: 0.35rem; transition: all 0.2s;" onclick="openAidaModalFromTaxCode('${p.tax_code}')">👁️ Scheda AIDA</button>` : 
+                        `<span style="font-size: 0.75rem; color: #9ca3af; font-style: italic; background: #f3f4f6; padding: 0.25rem 0.5rem; border-radius: 4px; border: 1px dashed #e5e7eb;">Dati AIDA non disponibili</span>`;
+                    
+                    // Agreement badge color
+                    let badgeBg = '#f3f4f6';
+                    let badgeColor = '#374151';
+                    const agreement = (p.agreement_type || '').toLowerCase();
+                    if (agreement.includes('quadro')) {
+                        badgeBg = '#fee2e2';
+                        badgeColor = '#991b1b';
+                    } else if (agreement.includes('protocollo')) {
+                        badgeBg = '#e0f2fe';
+                        badgeColor = '#075985';
+                    } else if (agreement.includes('convenzione')) {
+                        badgeBg = '#dcfce7';
+                        badgeColor = '#166534';
+                    }
+                    
+                    // Macro themes
+                    let macroThemesHtml = '';
+                    if (p.macro_themes) {
+                        let text = '';
+                        if (Array.isArray(p.macro_themes)) {
+                            text = p.macro_themes.join(', ');
+                        } else {
+                            text = p.macro_themes;
+                        }
+                        if (text.trim() !== '') {
+                            macroThemesHtml = `<div style="font-size: 0.85rem; color: #4b5563; line-height: 1.5; margin-bottom: 0.5rem; background: #f9fafb; padding: 0.5rem 0.75rem; border-left: 3px solid #bb2e29; border-radius: 0 4px 4px 0;">
+                                <strong style="color: #374151;">Temi di ricerca:</strong> ${text}
+                            </div>`;
+                        }
+                    }
+                    
+                    // Joint labs
+                    let labsHtml = '';
+                    if (p.joint_labs && p.joint_labs.length > 0) {
+                        let labsList = [];
+                        if (Array.isArray(p.joint_labs)) {
+                            labsList = p.joint_labs;
+                        } else {
+                            labsList = [p.joint_labs];
+                        }
+                        
+                        const labBadges = labsList.map(lab => 
+                            `<span style="display: inline-block; font-size: 0.75rem; background: #e0f2fe; color: #0369a1; padding: 0.15rem 0.45rem; border-radius: 4px; font-weight: 500;">🔬 ${lab}</span>`
+                        ).join(' ');
+                        
+                        labsHtml = `<div style="margin-top: 0.5rem; display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap;">
+                            <strong style="font-size: 0.8rem; color: #4b5563;">Lab congiunti:</strong>
+                            ${labBadges}
+                        </div>`;
+                    }
+                    
+                    partnerCardsHtml += `
+                        <div style="background: #ffffff; border: 1px solid #e5e7eb; border-radius: 6px; padding: 1.25rem; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 2px 5px rgba(0,0,0,0.02); transition: transform 0.2s, box-shadow 0.2s; min-height: 200px;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.05)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 5px rgba(0,0,0,0.02)';">
+                            <div style="margin-bottom: 1rem;">
+                                <h6 style="margin: 0 0 0.5rem 0; font-family: 'Inter', sans-serif; font-size: 0.95rem; color: #111827; font-weight: bold; line-height: 1.3;">${p.company_name}</h6>
+                                <span style="display: inline-block; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.025em; background: ${badgeBg}; color: ${badgeColor}; padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: bold; margin-bottom: 0.75rem;">
+                                    ${p.agreement_type}
+                                </span>
+                                ${macroThemesHtml}
+                                ${labsHtml}
+                            </div>
+                            <div style="border-top: 1px solid #f3f4f6; padding-top: 0.75rem; display: flex; align-items: center; justify-content: flex-end;">
+                                ${showLink}
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                content.innerHTML = partnerCardsHtml;
+                
+                header.onclick = () => {
+                    if (content.style.display === 'none') {
+                        content.style.display = 'grid';
+                        document.getElementById(`sector-chevron-${sectorId}`).style.transform = 'rotate(90deg)';
+                        expandedSectors.add(sec.sector);
+                    } else {
+                        content.style.display = 'none';
+                        document.getElementById(`sector-chevron-${sectorId}`).style.transform = 'rotate(0deg)';
+                        expandedSectors.delete(sec.sector);
+                    }
+                };
+                
+                accordionItem.appendChild(header);
+                accordionItem.appendChild(content);
+                container.appendChild(accordionItem);
+            });
+        }
+
+        // Helper to open AIDA modal from tax code in partners list
+        async function openAidaModalFromTaxCode(taxCode) {
+            // First check if company exists in currentResults cache
+            let company = currentResults.find(c => c.tax_code === taxCode);
+            if (company) {
+                openAidaModal(taxCode);
+                return;
+            }
+            
+            // Fetch company details from correct API endpoint
+            try {
+                const res = await fetch(`/api/v1/companies/by-tax-code/${taxCode}`);
+                if (res.ok) {
+                    const companyData = await res.json();
+                    currentResults.push(companyData);
+                    openAidaModal(taxCode);
+                } else {
+                    alert("Impossibile caricare i dati AIDA per questa azienda.");
+                }
+            } catch (err) {
+                console.error("Errore recupero dettagli partner:", err);
+                alert("Errore nel caricamento dei dati: " + err.message);
+            }
+        }
+
+        // --- ALUMNI LOGIC ---
+        let alumniCurrentPage = 1;
+        let alumniTotalPages = 1;
+        let alumniSearchDebounceTimer = null;
+
+        function onAlumniSearchChange() {
+            clearTimeout(alumniSearchDebounceTimer);
+            alumniSearchDebounceTimer = setTimeout(() => {
+                alumniCurrentPage = 1;
+                const q = document.getElementById('alumniSearchInput').value;
+                loadAlumniDirectory(alumniCurrentPage, q);
+            }, 300);
+        }
+
+        function changeAlumniPage(delta) {
+            const newPage = alumniCurrentPage + delta;
+            if (newPage >= 1 && newPage <= alumniTotalPages) {
+                alumniCurrentPage = newPage;
+                const q = document.getElementById('alumniSearchInput').value;
+                loadAlumniDirectory(alumniCurrentPage, q);
+            }
+        }
+
+        async function loadAlumniDirectory(page, query) {
+            const loader = document.getElementById('alumniLoader');
+            const grid = document.getElementById('alumniGridContainer');
+            const prevBtn = document.getElementById('btnPrevAlumni');
+            const nextBtn = document.getElementById('btnNextAlumni');
+            const pageIndicator = document.getElementById('alumniPageIndicator');
+            
+            if (!grid) return;
+            
+            if (loader) loader.style.display = 'block';
+            grid.innerHTML = '';
+            
+            try {
+                const res = await fetch(`/api/v1/alumni?page=${page}&per_page=12&search=${encodeURIComponent(query)}`);
+                if (!res.ok) throw new Error("Errore nel recupero degli alumni");
+                const data = await res.json();
+                
+                alumniCurrentPage = data.current_page || 1;
+                alumniTotalPages = data.total_pages || 1;
+                
+                if (pageIndicator) pageIndicator.innerText = `Pagina ${alumniCurrentPage} di ${alumniTotalPages} (${data.total_count} alumni)`;
+                
+                // Toggle navigation buttons disabled state
+                if (prevBtn) prevBtn.disabled = (alumniCurrentPage <= 1);
+                if (nextBtn) nextBtn.disabled = (alumniCurrentPage >= alumniTotalPages);
+                
+                if (!data.alumni || data.alumni.length === 0) {
+                    grid.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; color: #6b7280; padding: 2rem 0;">Nessun alumnus trovato con questi criteri di ricerca.</div>';
+                } else {
+                    data.alumni.forEach(al => {
+                        const card = document.createElement('div');
+                        card.style.background = '#ffffff';
+                        card.style.border = '1px solid #dee2e6';
+                        card.style.borderRadius = '6px';
+                        card.style.padding = '1.25rem';
+                        card.style.boxShadow = '0 2px 6px rgba(0,0,0,0.01)';
+                        card.style.display = 'flex';
+                        card.style.flexDirection = 'column';
+                        card.style.justifyContent = 'space-between';
+                        card.style.gap = '0.75rem';
+                        card.style.transition = 'all 0.2s ease';
+                        
+                        card.addEventListener('mouseenter', () => {
+                            card.style.borderColor = '#bb2e29';
+                            card.style.boxShadow = '0 4px 12px rgba(187, 46, 41, 0.06)';
+                        });
+                        card.addEventListener('mouseleave', () => {
+                            card.style.borderColor = '#dee2e6';
+                            card.style.boxShadow = '0 2px 6px rgba(0,0,0,0.01)';
+                        });
+
+                        const companyName = al.company_name_matched || al.company_raw || 'N/A';
+                        const currentRole = (al.jobs && al.jobs.length) ? al.jobs[0].role : 'Alumnus';
+                        const mainDegree = (al.degrees && al.degrees.length) ? `${al.degrees[0].type} in ${al.degrees[0].course}` : 'Laureato UNIBO';
+                        
+                        // Status badge (Willing to help)
+                        const wHelpBadge = al.willing_to_help ? 
+                            `<span style="background-color: #10b981; color: white; font-size: 0.7rem; font-weight: bold; padding: 0.15rem 0.4rem; border-radius: 4px; display: inline-block;">Willing to Help</span>` : '';
+                            
+                        const linkedinUrl = `https://www.linkedin.com/search/results/people/?keywords=${encodeURIComponent(al.first_name + ' ' + al.last_name + ' ' + companyName)}`;
+
+                        // Action button based on whether company is mapped in AIDA
+                        let actionButtonHtml = '';
+                        if (al.company_id) {
+                            const tax = al.company_id.replace('company:', '');
+                            actionButtonHtml = `<button class="outline" style="padding: 0.35rem 0.75rem; font-size: 0.75rem; border-color: #bb2e29; color: #bb2e29; font-weight: bold; margin: 0; width: auto; height: auto;" onclick="openAidaModalFromTaxCode('${tax}')">👁️ Azienda AIDA</button>`;
+                        } else {
+                            actionButtonHtml = `<span style="font-size: 0.75rem; color: #9ca3af; font-style: italic;">Azienda non in AIDA</span>`;
+                        }
+
+                        card.innerHTML = `
+                            <div style="display: flex; gap: 1rem; align-items: flex-start;">
+                                <img src="${al.photo_url}" alt="Foto Profilo" style="width: 55px; height: 55px; border-radius: 50%; border: 2px solid #bb2e29; object-fit: cover; background-color: #f3f4f6; flex-shrink: 0;">
+                                <div style="flex: 1; min-width: 0;">
+                                    <h6 style="margin: 0 0 0.2rem 0; font-family: 'Merriweather', serif; font-size: 1.05rem; color: #111827; font-weight: bold; cursor: pointer; text-decoration: underline;" onclick="openAlumnusModal(${JSON.stringify(al).replace(/'/g, "\\'").replace(/"/g, '&quot;')})">
+                                        ${al.first_name} ${al.last_name}
+                                    </h6>
+                                    <div style="font-size: 0.8rem; font-weight: 600; color: #4b5563; margin-bottom: 0.2rem; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">
+                                        ${currentRole} presso <span style="color: #bb2e29;">${companyName}</span>
+                                    </div>
+                                    <div style="font-size: 0.75rem; color: #6b7280; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; margin-bottom: 0.4rem;">
+                                        🎓 ${mainDegree}
+                                    </div>
+                                    ${wHelpBadge}
+                                </div>
+                            </div>
+                            <div style="border-top: 1px solid #f3f4f6; padding-top: 0.75rem; display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; flex-wrap: wrap;">
+                                <button class="outline" style="padding: 0.35rem 0.75rem; font-size: 0.75rem; font-weight: bold; margin: 0; width: auto; height: auto;" onclick="openAlumnusModal(${JSON.stringify(al).replace(/'/g, "\\'").replace(/"/g, '&quot;')})">Vedi Info</button>
+                                ${actionButtonHtml}
+                            </div>
+                        `;
+                        grid.appendChild(card);
+                    });
+                }
+            } catch (err) {
+                grid.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; color: red;">Errore durante il caricamento: ${err.message}</div>`;
+            } finally {
+                if (loader) loader.style.display = 'none';
+            }
+        }
+
+        // Open alumnus modal from JSON string (used inside gatekeeper list)
+        function openAlumnusModalFromJSON(alJsonStr) {
+            try {
+                const alumnus = JSON.parse(alJsonStr);
+                openAlumnusModal(alumnus);
+            } catch (e) {
+                console.error("Errore parse alumnus JSON:", e);
+                alert("Impossibile caricare i dati completi dell'alumnus.");
+            }
+        }
+
+        // Open detailed alumnus modal with photo, email, degrees, and jobs list
+        function openAlumnusModal(al) {
+            const modal = document.getElementById('alumnusDetailsModal');
+            const titleEl = document.getElementById('modalAlumnusName');
+            const bodyEl = document.getElementById('modalAlumnusBody');
+            
+            if (!modal || !bodyEl || !titleEl) return;
+            
+            titleEl.innerText = `${al.first_name} ${al.last_name}`;
+            
+            // Build degrees list HTML
+            let degreesHtml = '<p style="color: #6b7280; font-style: italic; font-size: 0.9rem; margin: 0 0 0.5rem 0;">Nessun titolo inserito.</p>';
+            if (al.degrees && al.degrees.length > 0) {
+                degreesHtml = al.degrees.map(d => `
+                    <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 4px; padding: 0.75rem; margin-bottom: 0.5rem;">
+                        <strong style="color: #bb2e29; font-size: 0.95rem;">${d.type || 'Titolo'}</strong>
+                        <div style="font-size: 0.9rem; font-weight: bold; color: #111827; margin: 0.2rem 0;">${d.course || 'N/A'}</div>
+                        <div style="font-size: 0.8rem; color: #4b5563;">Dipartimento: ${d.department || 'N/A'}</div>
+                        <div style="font-size: 0.8rem; color: #6b7280; display: flex; justify-content: space-between; margin-top: 0.2rem;">
+                            <span>Sede: ${d.city || 'Bologna'}</span>
+                            <span>Anno: ${d.year || 'N/A'}</span>
+                        </div>
+                    </div>
+                `).join('');
+            }
+            
+            // Build jobs list HTML
+            let jobsHtml = '<p style="color: #6b7280; font-style: italic; font-size: 0.9rem; margin: 0;">Nessuna esperienza inserita.</p>';
+            if (al.jobs && al.jobs.length > 0) {
+                jobsHtml = al.jobs.map((j, i) => `
+                    <div style="border-left: 2px solid #bb2e29; padding-left: 1rem; margin-bottom: 0.75rem; position: relative;">
+                        <div style="position: absolute; left: -5px; top: 4px; width: 8px; height: 8px; border-radius: 50%; background-color: #bb2e29;"></div>
+                        <strong style="color: #111827; font-size: 0.95rem;">${j.role || 'Ruolo'}</strong>
+                        <div style="font-size: 0.85rem; color: #4b5563; font-weight: 500; margin-top: 0.1rem;">Presso: ${j.company || 'N/A'}</div>
+                        ${i === 0 ? `<span style="background-color: #e0f2fe; color: #0369a1; font-size: 0.65rem; font-weight: bold; padding: 0.1rem 0.3rem; border-radius: 4px; display: inline-block; margin-top: 0.2rem;">Lavoro Attuale</span>` : ''}
+                    </div>
+                `).join('');
+            }
+            
+            const wHelpBadge = al.willing_to_help ? 
+                `<span style="background-color: #10b981; color: white; font-size: 0.75rem; font-weight: bold; padding: 0.25rem 0.6rem; border-radius: 4px; display: inline-block; vertical-align: middle; margin-left: 0.5rem;">Willing to Help</span>` : '';
+                
+            const companyName = al.company_name_matched || al.company_raw || 'N/A';
+
+            bodyEl.innerHTML = `
+                <div style="display: flex; gap: 1.5rem; align-items: center; margin-bottom: 1.5rem; border-bottom: 1px solid #e5e7eb; padding-bottom: 1.5rem; flex-wrap: wrap;">
+                    <img src="${al.photo_url}" alt="Foto Profilo" style="width: 90px; height: 90px; border-radius: 50%; border: 3px solid #bb2e29; object-fit: cover; background-color: #f3f4f6; flex-shrink: 0;">
+                    <div style="flex: 1; min-width: 250px;">
+                        <h4 style="margin: 0; font-family: 'Merriweather', serif; font-size: 1.3rem; color: #111827; font-weight: 800; display: inline-block; vertical-align: middle;">
+                            ${al.first_name} ${al.last_name}
+                        </h4>
+                        ${wHelpBadge}
+                        <div style="font-size: 0.85rem; color: #4b5563; margin-top: 0.5rem;">
+                            <strong>E-mail di contatto:</strong> ${al.email ? `<a href="mailto:${al.email}" style="color: #bb2e29; text-decoration: underline;">${al.email}</a>` : '<span style="font-style: italic; color: #9ca3af;">Non disponibile</span>'}
+                        </div>
+                        <div style="margin-top: 0.75rem;">
+                            <a href="https://www.linkedin.com/search/results/people/?keywords=${encodeURIComponent(al.first_name + ' ' + al.last_name + ' ' + companyName)}" target="_blank" role="button" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; background-color: #0a66c2; border-color: #0a66c2; color: #ffffff; text-decoration: none; display: inline-flex; align-items: center; gap: 0.4rem; font-weight: bold; border-radius: 4px; height: auto; margin: 0; width: auto;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 24 24" style="vertical-align: middle;">
+                                    <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.779-1.75-1.75s.784-1.75 1.75-1.75 1.75.779 1.75 1.75-.784 1.75-1.75 1.75zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
+                                </svg>
+                                Cerca su LinkedIn
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="margin-bottom: 1.5rem;">
+                    <h5 style="font-family: 'Merriweather', serif; font-size: 1.05rem; font-weight: bold; border-left: 3px solid #bb2e29; padding-left: 0.5rem; margin-top: 0; margin-bottom: 0.75rem; color: #111827;">
+                        Titoli di Studio (UNIBO)
+                    </h5>
+                    ${degreesHtml}
+                </div>
+                
+                <div>
+                    <h5 style="font-family: 'Merriweather', serif; font-size: 1.05rem; font-weight: bold; border-left: 3px solid #bb2e29; padding-left: 0.5rem; margin-top: 0; margin-bottom: 0.75rem; color: #111827;">
+                        Esperienze Lavorative
+                    </h5>
+                    <div style="background: #fdfdfd; border: 1px solid #e5e7eb; border-radius: 4px; padding: 1rem; display: flex; flex-direction: column; gap: 0.75rem;">
+                        ${jobsHtml}
+                    </div>
+                </div>
+            `;
+            
+            modal.showModal();
+        }
+
+        function closeAlumnusModal() {
+            const modal = document.getElementById('alumnusDetailsModal');
+            if (modal) modal.close();
+        }
+
         function closeAidaModal() {
             document.getElementById('aidaModal').close();
         }
