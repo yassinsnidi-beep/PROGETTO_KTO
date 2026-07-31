@@ -1196,8 +1196,7 @@ def _get_existing_tax_codes(target_codes=None):
                 tc = doc.get("tax_code")
                 if tc:
                     existing.add(str(tc).strip().lstrip('0'))
-            # Se il database è connesso ed ha restituito risultati, non serve caricare l'Excel AIDA
-            return existing
+            pass
         except Exception as e:
             app.logger.error(f"Error checking DB tax codes for partners: {e}")
             
