@@ -1172,44 +1172,53 @@ def _get_mock_partners():
         }
     ]
 
-_cached_existing_tax_codes = None
-
-def _get_existing_tax_codes():
-    global _cached_existing_tax_codes
-    if _cached_existing_tax_codes is not None:
-        return _cached_existing_tax_codes
-        
+def _get_existing_tax_codes(target_codes=None):
     existing = set()
+    if not target_codes:
+        return existing
+        
+    # Costruiamo la lista di tutte le variazioni possibili per il confronto (con e senza zeri iniziali)
+    possible_codes = []
+    for tc in target_codes:
+        if tc:
+            tc_str = str(tc).strip()
+            possible_codes.append(tc_str)
+            if tc_str.isdigit():
+                possible_codes.append(tc_str.zfill(11))
+                possible_codes.append(tc_str.lstrip("0"))
+    possible_codes = list(set(possible_codes))
     
-    # 1. Carica codici fiscali da MongoDB
+    # 1. Carica i codici fiscali da MongoDB (solo quelli dei partner!)
     if db_connected:
         try:
-            cursor = db.companies.find({}, {"tax_code": 1})
+            cursor = db.companies.find({"tax_code": {"$in": possible_codes}}, {"tax_code": 1})
             for doc in cursor:
                 tc = doc.get("tax_code")
                 if tc:
                     existing.add(str(tc).strip().lstrip('0'))
+            # Se il database è connesso ed ha restituito risultati, non serve caricare l'Excel AIDA
+            return existing
         except Exception as e:
-            app.logger.error(f"Error caching DB tax codes: {e}")
+            app.logger.error(f"Error checking DB tax codes for partners: {e}")
             
-    # 2. Carica codici fiscali da Excel AIDA
+    # 2. Carica i codici fiscali da Excel AIDA (solo per i partner e solo in modalità local fallback)
     excel_path = "Aida_FILE_COMPLETO.xlsx"
     if os.path.exists(excel_path):
         try:
             import pandas as pd
-            df = pd.read_excel(excel_path, sheet_name="Results")
-            col_map = {str(c).lower().replace(" ", "").replace("_", "").replace("\n", ""): c for c in df.columns}
-            tax_col = col_map.get("taxcodenumber")
+            # Carichiamo solo la colonna del codice fiscale per risparmiare memoria RAM
+            df = pd.read_excel(excel_path, sheet_name="Results", usecols=lambda x: str(x).lower().replace(" ", "").replace("_", "").replace("\n", "") == "taxcodenumber")
+            tax_col = df.columns[0] if not df.empty else None
             if tax_col:
+                clean_targets = {str(tc).strip().lstrip('0') for tc in target_codes if tc}
                 for val in df[tax_col].dropna().unique():
                     tc = str(val).strip().replace(".0", "").lstrip('0')
-                    if tc:
+                    if tc in clean_targets:
                         existing.add(tc)
         except Exception as e:
-            app.logger.error(f"Error caching Excel tax codes: {e}")
+            app.logger.error(f"Error checking Excel tax codes for partners: {e}")
             
-    _cached_existing_tax_codes = existing
-    return _cached_existing_tax_codes
+    return existing
 
 @app.route("/api/v1/partners", methods=["GET"])
 def get_partners():
@@ -1273,7 +1282,19 @@ def get_partners():
             "Legacoop Romagna": "90022370404"
         }
         
-        existing_tax_codes = _get_existing_tax_codes()
+        # Compila la lista di tutti i codici fiscali dei partner per la ricerca ottimizzata
+        partner_tax_codes = []
+        for sector in sectors:
+            for partner in sector["partners"]:
+                partner_id = partner["id"]
+                company_name = partner["company_name"]
+                tax_code = partnership_to_tax_code.get(partner_id, None)
+                if not tax_code:
+                    tax_code = NAME_TO_TAX_CODE_FALLBACK.get(company_name, None)
+                if tax_code:
+                    partner_tax_codes.append(str(tax_code).strip())
+                    
+        existing_tax_codes = _get_existing_tax_codes(partner_tax_codes)
         
         formatted_sectors = []
         for sector in sectors:
