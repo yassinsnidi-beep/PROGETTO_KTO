@@ -1196,27 +1196,25 @@ def _get_existing_tax_codes(target_codes=None):
                 tc = doc.get("tax_code")
                 if tc:
                     existing.add(str(tc).strip().lstrip('0'))
-            pass
         except Exception as e:
             app.logger.error(f"Error checking DB tax codes for partners: {e}")
             
-    # 2. Carica i codici fiscali da Excel AIDA (solo per i partner e solo in modalità local fallback)
-    excel_path = "Aida_FILE_COMPLETO.xlsx"
-    if os.path.exists(excel_path):
-        try:
-            import pandas as pd
-            # Carichiamo solo la colonna del codice fiscale per risparmiare memoria RAM
-            df = pd.read_excel(excel_path, sheet_name="Results", usecols=lambda x: str(x).lower().replace(" ", "").replace("_", "").replace("\n", "") == "taxcodenumber")
-            tax_col = df.columns[0] if not df.empty else None
-            if tax_col:
-                clean_targets = {str(tc).strip().lstrip('0') for tc in target_codes if tc}
-                for val in df[tax_col].dropna().unique():
-                    tc = str(val).strip().replace(".0", "").lstrip('0')
-                    if tc in clean_targets:
-                        existing.add(tc)
-        except Exception as e:
-            app.logger.error(f"Error checking Excel tax codes for partners: {e}")
-            
+    # 2. Invece di caricare il file Excel (operazione da 14MB che consuma troppa RAM su Render portando a OOM / SIGKILL),
+    # consideriamo presenti in AIDA tutti i partner commerciali che hanno un codice fiscale valido,
+    # escludendo solo gli enti/associazioni notoriamente assenti da AIDA.
+    NON_AIDA_TAX_CODES = {
+        "97401730154",  # ASSORESTAURO (Associazione)
+        "03028211204",  # Consorzio Ospedaliero Colibrì (Consorzio)
+        "07361731007",  # Federunacoma (Associazione)
+        "90022370404"   # Legacoop Romagna (Associazione)
+    }
+    
+    for tc in target_codes:
+        if tc:
+            clean_tc = str(tc).strip().lstrip('0')
+            if clean_tc not in NON_AIDA_TAX_CODES:
+                existing.add(clean_tc)
+                
     return existing
 
 @app.route("/api/v1/partners", methods=["GET"])
