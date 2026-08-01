@@ -3,7 +3,6 @@ import logging
 from datetime import datetime
 from typing import List
 from pydantic import BaseModel, Field
-from langchain_google_genai import ChatGoogleGenerativeAI
 from src.config import Settings, load_settings
 from src.db import get_database
 
@@ -112,28 +111,102 @@ Dettagli KTO / Ambito: {patent_kto}
 
 Genera una Proposta di Progetto di Trasferimento Tecnologico completa, strategica e pronta da presentare al management. Spiega esattamente come la tecnologia brevettata si integra nei processi o nei prodotti dell'azienda."""
 
-    # 5. Invoke Google Gemini Pro
+    # 5. Invoke Google Gemini API via raw HTTPS request to avoid gRPC memory bloat
     api_key = settings.gemini_api_key
     if not api_key:
         api_key = os.getenv("GEMINI_API_KEY")
     if not api_key:
         raise ValueError("GEMINI_API_KEY is not configured in .env file or environment.")
 
-    logger.info("Calling Gemini Pro for joint proposal generation...")
-    model = ChatGoogleGenerativeAI(
-        model=settings.llm_model,
-        google_api_key=api_key,
-        temperature=0.2,
+    logger.info("Calling raw Gemini API for joint proposal generation...")
+    
+    # Costruiamo il payload JSON secondo le specifiche delle API Google GenAI
+    payload = {
+        "contents": [
+            {
+                "role": "user",
+                "parts": [
+                    {"text": f"SYSTEM_PROMPT:\n{system_prompt}\n\nUSER_PROMPT:\n{user_prompt}"}
+                ]
+            }
+        ],
+        "generationConfig": {
+            "responseMimeType": "application/json",
+            "responseSchema": {
+                "type": "OBJECT",
+                "properties": {
+                    "project_title": {"type": "STRING"},
+                    "executive_summary": {"type": "STRING"},
+                    "synergy_analysis": {"type": "STRING"},
+                    "current_trl": {"type": "STRING"},
+                    "target_trl": {"type": "STRING"},
+                    "innovation_impact": {"type": "STRING"},
+                    "work_packages": {
+                        "type": "ARRAY",
+                        "items": {
+                            "type": "OBJECT",
+                            "properties": {
+                                "title": {"type": "STRING"},
+                                "description": {"type": "STRING"},
+                                "duration_months": {"type": "INTEGER"},
+                                "expected_deliverable": {"type": "STRING"}
+                            },
+                            "required": ["title", "description", "duration_months", "expected_deliverable"]
+                        }
+                    },
+                    "timeline_total_months": {"type": "INTEGER"},
+                    "risks_and_mitigations": {
+                        "type": "ARRAY",
+                        "items": {
+                            "type": "OBJECT",
+                            "properties": {
+                                "risk": {"type": "STRING"},
+                                "mitigation": {"type": "STRING"}
+                            },
+                            "required": ["risk", "mitigation"]
+                        }
+                    },
+                    "next_steps": {
+                        "type": "ARRAY",
+                        "items": {"type": "STRING"}
+                    }
+                },
+                "required": [
+                    "project_title", "executive_summary", "synergy_analysis", "current_trl", 
+                    "target_trl", "innovation_impact", "work_packages", "timeline_total_months", 
+                    "risks_and_mitigations", "next_steps"
+                ]
+            },
+            "temperature": 0.2
+        }
+    }
+    
+    import urllib.request
+    import json
+    
+    model_name = settings.llm_model.strip()
+    # Rimuoviamo eventuali prefissi duplicati models/
+    if model_name.startswith("models/"):
+        model_name = model_name[7:]
+        
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={api_key}"
+    
+    req = urllib.request.Request(
+        url,
+        data=json.dumps(payload).encode("utf-8"),
+        headers={"Content-Type": "application/json"},
+        method="POST"
     )
-
-    # Force structured output
-    structured_llm = model.with_structured_output(ProjectProposalJSON)
-    response_obj = structured_llm.invoke([
-        {"role": "system", "content": system_prompt},
-        {"role": "user", "content": user_prompt}
-    ])
-
-    proposal_dict = response_obj.model_dump()
+    
+    try:
+        with urllib.request.urlopen(req, timeout=45) as response:
+            res_data = json.loads(response.read().decode("utf-8"))
+            candidate = res_data["candidates"][0]
+            text_response = candidate["content"]["parts"][0]["text"]
+            proposal_dict = json.loads(text_response)
+    except Exception as api_err:
+        logger.error(f"Error calling raw Gemini API: {api_err}")
+        raise RuntimeError(f"Error calling model '{settings.llm_model}': {api_err}")
 
     # 6. Save to cache
     cache_doc = {
@@ -150,5 +223,5 @@ Genera una Proposta di Progetto di Trasferimento Tecnologico completa, strategic
         upsert=True
     )
     logger.info("Successfully generated and cached proposal for company=%s, patent=%s", company_id, patent_id)
-
+    
     return proposal_dict
