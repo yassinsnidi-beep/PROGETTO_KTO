@@ -46,5 +46,5 @@ def load_settings(force_generate_embeddings: bool | None = None) -> Settings:
         ollama_base_url=os.getenv("OLLAMA_BASE_URL", "http://localhost:11434").rstrip("/"),
         sentence_transformers_device=os.getenv("SENTENCE_TRANSFORMERS_DEVICE") or None,
         gemini_api_key=os.getenv("GEMINI_API_KEY"),
-        llm_model=os.getenv("LLM_MODEL", "gemini-1.5-flash"),
+        llm_model=os.getenv("LLM_MODEL", "gemini-2.5-flash"),
     )
