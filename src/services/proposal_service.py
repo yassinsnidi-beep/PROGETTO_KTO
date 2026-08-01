@@ -198,15 +198,31 @@ Genera una Proposta di Progetto di Trasferimento Tecnologico completa, strategic
         method="POST"
     )
     
-    try:
-        with urllib.request.urlopen(req, timeout=45) as response:
-            res_data = json.loads(response.read().decode("utf-8"))
-            candidate = res_data["candidates"][0]
-            text_response = candidate["content"]["parts"][0]["text"]
-            proposal_dict = json.loads(text_response)
-    except Exception as api_err:
-        logger.error(f"Error calling raw Gemini API: {api_err}")
-        raise RuntimeError(f"Error calling model '{settings.llm_model}': {api_err}")
+    import time
+    max_attempts = 3
+    proposal_dict = None
+    last_error = None
+    
+    for attempt in range(max_attempts):
+        try:
+            logger.info(f"Attempt {attempt + 1} of {max_attempts} to call Gemini API...")
+            with urllib.request.urlopen(req, timeout=45) as response:
+                res_data = json.loads(response.read().decode("utf-8"))
+                candidate = res_data["candidates"][0]
+                text_response = candidate["content"]["parts"][0]["text"]
+                proposal_dict = json.loads(text_response)
+                logger.info("Successfully received and parsed proposal from Gemini.")
+                break
+        except Exception as api_err:
+            last_error = api_err
+            logger.warning(f"Gemini API attempt {attempt + 1} failed: {api_err}")
+            if attempt < max_attempts - 1:
+                # Aspetta prima di riprovare (1.5 secondi)
+                time.sleep(1.5)
+                
+    if proposal_dict is None:
+        logger.error(f"All {max_attempts} attempts failed calling raw Gemini API: {last_error}")
+        raise RuntimeError(f"Error calling model '{settings.llm_model}': {last_error}")
 
     # 6. Save to cache
     cache_doc = {
