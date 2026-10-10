@@ -1,10 +1,23 @@
 import os
 import logging
+import threading
 from datetime import datetime
 from typing import List
 from pydantic import BaseModel, Field
 from src.config import Settings, load_settings
 from src.db import get_database
+
+# ---------------------------------------------------------------------------
+# CONTROLLI DI CONCORRENZA
+# ---------------------------------------------------------------------------
+# Semaforo globale: max 5 chiamate Gemini contemporanee.
+# Le richieste in eccesso aspettano in coda ordinata invece di crashare.
+_gemini_semaphore = threading.Semaphore(5)
+
+# Lock per-chiave: se due utenti chiedono la stessa proposta contemporaneamente,
+# solo uno chiama Gemini. Il secondo aspetta e trova il risultato già in cache.
+_in_flight: dict = {}
+_in_flight_mutex = threading.Lock()
 
 logger = logging.getLogger(__name__)
 
@@ -182,47 +195,86 @@ Genera una Proposta di Progetto di Trasferimento Tecnologico completa, strategic
     }
     
     import urllib.request
+    import urllib.error
     import json
-    
+    import time
+
     model_name = settings.llm_model.strip()
     # Rimuoviamo eventuali prefissi duplicati models/
     if model_name.startswith("models/"):
         model_name = model_name[7:]
-        
+
     url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={api_key}"
-    
-    req = urllib.request.Request(
-        url,
-        data=json.dumps(payload).encode("utf-8"),
-        headers={"Content-Type": "application/json"},
-        method="POST"
-    )
-    
-    import time
-    max_attempts = 3
-    proposal_dict = None
-    last_error = None
-    
-    for attempt in range(max_attempts):
-        try:
-            logger.info(f"Attempt {attempt + 1} of {max_attempts} to call Gemini API...")
-            with urllib.request.urlopen(req, timeout=45) as response:
-                res_data = json.loads(response.read().decode("utf-8"))
-                candidate = res_data["candidates"][0]
-                text_response = candidate["content"]["parts"][0]["text"]
-                proposal_dict = json.loads(text_response)
-                logger.info("Successfully received and parsed proposal from Gemini.")
-                break
-        except Exception as api_err:
-            last_error = api_err
-            logger.warning(f"Gemini API attempt {attempt + 1} failed: {api_err}")
-            if attempt < max_attempts - 1:
-                # Aspetta prima di riprovare (1.5 secondi)
-                time.sleep(1.5)
-                
-    if proposal_dict is None:
-        logger.error(f"All {max_attempts} attempts failed calling raw Gemini API: {last_error}")
-        raise RuntimeError(f"Error calling model '{settings.llm_model}': {last_error}")
+
+    # -----------------------------------------------------------------------
+    # Lock per-chiave: evita chiamate Gemini duplicate per la stessa coppia
+    # -----------------------------------------------------------------------
+    cache_key = f"{company_id}::{patent_id}"
+    with _in_flight_mutex:
+        if cache_key not in _in_flight:
+            _in_flight[cache_key] = threading.Lock()
+        key_lock = _in_flight[cache_key]
+
+    with key_lock:
+        # Ri-controlla la cache: un altro thread potrebbe aver già salvato il risultato
+        if not force_regenerate:
+            cached_again = cache_col.find_one({"company_id": company_id, "patent_id": patent_id})
+            if cached_again and "proposal" in cached_again:
+                logger.info("Cache hit dopo key-lock per company=%s, patent=%s", company_id, patent_id)
+                return cached_again["proposal"]
+
+        max_attempts = 4
+        proposal_dict = None
+        last_error = None
+
+        # -------------------------------------------------------------------
+        # Semaforo globale: max 5 chiamate Gemini contemporanee in tutto il server
+        # -------------------------------------------------------------------
+        with _gemini_semaphore:
+            for attempt in range(max_attempts):
+                try:
+                    logger.info(f"Tentativo {attempt + 1}/{max_attempts} — chiamata Gemini API...")
+                    req = urllib.request.Request(
+                        url,
+                        data=json.dumps(payload).encode("utf-8"),
+                        headers={"Content-Type": "application/json"},
+                        method="POST"
+                    )
+                    with urllib.request.urlopen(req, timeout=60) as response:
+                        res_data = json.loads(response.read().decode("utf-8"))
+                        candidate = res_data["candidates"][0]
+                        text_response = candidate["content"]["parts"][0]["text"]
+                        proposal_dict = json.loads(text_response)
+                        logger.info("Proposta ricevuta e parsata correttamente da Gemini.")
+                        break
+                except urllib.error.HTTPError as http_err:
+                    last_error = http_err
+                    status_code = http_err.code
+                    logger.warning(f"Tentativo {attempt + 1} fallito — HTTP {status_code}: {http_err}")
+                    if status_code == 429:
+                        # Rate limit → backoff esponenziale più lungo
+                        wait_time = (2 ** attempt) * 3  # 3s, 6s, 12s, 24s
+                        logger.info(f"Rate limit (429). Attendo {wait_time}s prima di riprovare...")
+                        time.sleep(wait_time)
+                    elif status_code >= 500:
+                        # Errore lato server → backoff breve
+                        time.sleep(2 ** attempt)  # 1s, 2s, 4s, 8s
+                    else:
+                        # Errore client (400, 403...) → inutile riprovare
+                        raise RuntimeError(f"Errore API Gemini {status_code}: {http_err}")
+                except Exception as api_err:
+                    last_error = api_err
+                    logger.warning(f"Tentativo {attempt + 1} fallito: {api_err}")
+                    if attempt < max_attempts - 1:
+                        time.sleep(2 ** attempt)  # 1s, 2s, 4s
+
+        if proposal_dict is None:
+            logger.error(f"Tutti i {max_attempts} tentativi falliti. Ultimo errore: {last_error}")
+            raise RuntimeError(
+                "Il servizio AI è momentaneamente sovraccarico. "
+                "Riprova tra qualche minuto."
+            )
+
 
     # 6. Save to cache
     cache_doc = {

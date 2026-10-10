@@ -828,9 +828,59 @@
                     <h3 style="margin: 0;">Proposta di Progetto AI</h3>
                 </header>
                 
-                <div id="modalLoader" style="display: none; text-align: center; padding: 2rem 0;">
-                    <span aria-busy="true">Analisi sinergie con Gemini Pro in corso...</span>
+                <div id="modalLoader" style="display: none; text-align: center; padding: 3rem 1.5rem;">
+                    <style>
+                        @keyframes uniboSpin {
+                            from { transform: rotate(0deg); }
+                            to { transform: rotate(360deg); }
+                        }
+                        @keyframes uniboPulse {
+                            0%, 100% { opacity: 1; }
+                            50% { opacity: 0.45; }
+                        }
+                    </style>
+                    <!-- Spinner UNIBO -->
+                    <div style="display:inline-flex; align-items:center; justify-content:center; margin-bottom:1.5rem;">
+                        <svg width="60" height="60" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="30" cy="30" r="26" stroke="#f3f4f6" stroke-width="5"/>
+                            <circle cx="30" cy="30" r="26" stroke="#bb2e29" stroke-width="5" stroke-linecap="round"
+                                    stroke-dasharray="41 123"
+                                    style="transform-origin:30px 30px; animation:uniboSpin 1.4s linear infinite;"/>
+                        </svg>
+                    </div>
+                    <p style="font-size:1.1rem; font-weight:700; color:#111827; margin:0 0 0.3rem 0; font-family:'Merriweather',Georgia,serif;">Generazione Proposta in corso</p>
+                    <p style="font-size:0.85rem; color:#6b7280; margin:0 0 2rem 0;">L'AI analizza le sinergie tra il brevetto e l'azienda selezionata</p>
+                    <!-- Step indicators -->
+                    <div style="max-width:360px; margin:0 auto; text-align:left;">
+                        <div id="loaderStep1" style="display:flex;align-items:center;gap:0.6rem;padding:0.55rem 1rem;border-radius:0.4rem;margin-bottom:0.4rem;font-size:0.875rem;font-weight:600;color:#bb2e29;background:rgba(187,46,41,0.07);border-left:3px solid #bb2e29;transition:all 0.4s ease;">
+                            <span>🔍</span><span>Analisi profilo aziendale</span>
+                        </div>
+                        <div id="loaderStep2" style="display:flex;align-items:center;gap:0.6rem;padding:0.55rem 1rem;border-radius:0.4rem;margin-bottom:0.4rem;font-size:0.875rem;color:#9ca3af;border-left:3px solid transparent;transition:all 0.4s ease;">
+                            <span>📄</span><span>Lettura scheda brevetto UNIBO</span>
+                        </div>
+                        <div id="loaderStep3" style="display:flex;align-items:center;gap:0.6rem;padding:0.55rem 1rem;border-radius:0.4rem;margin-bottom:0.4rem;font-size:0.875rem;color:#9ca3af;border-left:3px solid transparent;transition:all 0.4s ease;">
+                            <span>🤖</span><span>Elaborazione AI — Gemini</span>
+                        </div>
+                        <div id="loaderStep4" style="display:flex;align-items:center;gap:0.6rem;padding:0.55rem 1rem;border-radius:0.4rem;font-size:0.875rem;color:#9ca3af;border-left:3px solid transparent;transition:all 0.4s ease;">
+                            <span>📋</span><span>Strutturazione proposta finale</span>
+                        </div>
+                    </div>
+                    <p style="color:#9ca3af;font-size:0.8rem;margin-top:1.75rem;animation:uniboPulse 2.2s ease-in-out infinite;">Questa operazione richiede 20–40 secondi</p>
                 </div>
+
+                <!-- Stato di errore nel modal -->
+                <div id="modalError" style="display:none; text-align:center; padding:3rem 1.5rem;">
+                    <div style="width:64px;height:64px;border-radius:50%;background:rgba(187,46,41,0.08);display:inline-flex;align-items:center;justify-content:center;margin-bottom:1.25rem;font-size:1.75rem;">⚠️</div>
+                    <h4 style="color:#bb2e29;margin:0 0 0.5rem 0;font-family:'Merriweather',Georgia,serif;">Generazione non riuscita</h4>
+                    <p id="modalErrorMsg" style="color:#6b7280;font-size:0.92rem;margin:0 auto 2rem auto;max-width:400px;line-height:1.65;">
+                        Il servizio AI è momentaneamente sovraccarico.<br>Riprova tra qualche minuto.
+                    </p>
+                    <div style="display:flex;gap:0.75rem;justify-content:center;flex-wrap:wrap;">
+                        <button onclick="retryProposal()" style="padding:0.6rem 1.5rem;margin:0;">🔄 Riprova</button>
+                        <button class="secondary" onclick="closeProposalModal()" style="padding:0.6rem 1.5rem;margin:0;background-color:#6b7280 !important;border-color:#6b7280 !important;">Chiudi</button>
+                    </div>
+                </div>
+
                 
                 <div id="modalContent" style="display: none; max-height: 60vh; overflow-y: auto;">
                     <!-- Header Card -->
@@ -1375,6 +1425,53 @@
 
         let activeCompanyId = null;
         let currentProposal = null;
+        let _loaderStepTimer = null;
+
+        // Avvia l'animazione step-by-step del loader
+        function _startLoaderSteps() {
+            const steps = ['loaderStep1','loaderStep2','loaderStep3','loaderStep4'];
+            const activeStyle  = 'display:flex;align-items:center;gap:0.6rem;padding:0.55rem 1rem;border-radius:0.4rem;margin-bottom:0.4rem;font-size:0.875rem;font-weight:600;color:#bb2e29;background:rgba(187,46,41,0.07);border-left:3px solid #bb2e29;transition:all 0.4s ease;';
+            const doneStyle    = 'display:flex;align-items:center;gap:0.6rem;padding:0.55rem 1rem;border-radius:0.4rem;margin-bottom:0.4rem;font-size:0.875rem;font-weight:600;color:#16a34a;background:rgba(22,163,74,0.06);border-left:3px solid #16a34a;transition:all 0.4s ease;';
+            const pendingStyle = 'display:flex;align-items:center;gap:0.6rem;padding:0.55rem 1rem;border-radius:0.4rem;margin-bottom:0.4rem;font-size:0.875rem;color:#9ca3af;border-left:3px solid transparent;transition:all 0.4s ease;';
+            // Reset
+            steps.forEach((id, i) => {
+                const el = document.getElementById(id);
+                if (el) el.style.cssText = (i === 0 ? activeStyle : pendingStyle);
+            });
+            let current = 0;
+            _loaderStepTimer = setInterval(() => {
+                // Segna il corrente come done
+                const doneEl = document.getElementById(steps[current]);
+                if (doneEl) {
+                    const isLast = (current === steps.length - 1);
+                    const doneBase = doneStyle.replace('margin-bottom:0.4rem;', isLast ? '' : 'margin-bottom:0.4rem;');
+                    doneEl.style.cssText = doneBase;
+                    const icon = doneEl.querySelector('span:first-child');
+                    if (icon) icon.textContent = '✓';
+                }
+                current++;
+                if (current < steps.length) {
+                    const nextEl = document.getElementById(steps[current]);
+                    if (nextEl) nextEl.style.cssText = (current === steps.length - 1)
+                        ? activeStyle.replace('margin-bottom:0.4rem;', '')
+                        : activeStyle;
+                } else {
+                    clearInterval(_loaderStepTimer);
+                }
+            }, 8000); // avanza ogni ~8 secondi
+        }
+
+        // Ferma l'animazione e reimposta le icone
+        function _stopLoaderSteps() {
+            if (_loaderStepTimer) { clearInterval(_loaderStepTimer); _loaderStepTimer = null; }
+            ['loaderStep1','loaderStep2','loaderStep3','loaderStep4'].forEach((id, i) => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                const icons = ['🔍','📄','🤖','📋'];
+                const icon = el.querySelector('span:first-child');
+                if (icon) icon.textContent = icons[i];
+            });
+        }
 
         function openProposalModal(companyId) {
             try {
@@ -1415,6 +1512,7 @@
 
         function closeProposalModal() {
             try {
+                _stopLoaderSteps();
                 const modal = document.getElementById('proposalModal');
                 if (modal) modal.close();
             } catch (err) {
@@ -1423,13 +1521,19 @@
         }
 
         async function fetchProposal(companyId, force) {
-            const loader = document.getElementById('modalLoader');
-            const content = document.getElementById('modalContent');
+            const loader   = document.getElementById('modalLoader');
+            const errDiv   = document.getElementById('modalError');
+            const content  = document.getElementById('modalContent');
             const btnRegen = document.getElementById('btnRegenerate');
 
-            if (loader) loader.style.display = 'block';
-            if (content) content.style.display = 'none';
-            if (btnRegen) btnRegen.disabled = true;
+            // Mostra loader, nascondi tutto il resto
+            if (loader)   { loader.style.display  = 'block'; }
+            if (errDiv)   { errDiv.style.display   = 'none';  }
+            if (content)  { content.style.display  = 'none';  }
+            if (btnRegen) { btnRegen.disabled = true; }
+
+            _stopLoaderSteps();
+            _startLoaderSteps();
 
             try {
                 const patentId = activePatentId;
@@ -1516,14 +1620,27 @@
                     stepsOl.appendChild(li);
                 });
 
-                content.style.display = 'block';
+                if (content) content.style.display = 'block';
 
             } catch (error) {
-                alert(`Errore: ${error.message}`);
-                closeProposalModal();
+                // Mostra il pannello di errore professionale invece di alert + chiusura
+                const errMsg = document.getElementById('modalErrorMsg');
+                if (errMsg) {
+                    const msg = error.message || 'Errore sconosciuto';
+                    if (msg.includes('sovraccarico') || msg.includes('429') || msg.includes('occupato')) {
+                        errMsg.innerHTML = 'Il servizio AI è momentaneamente sovraccarico.<br>Riprova tra qualche minuto.';
+                    } else if (msg.includes('brevetto') || msg.includes('ID')) {
+                        errMsg.innerHTML = msg;
+                    } else {
+                        errMsg.innerHTML = 'Si è verificato un errore imprevisto durante la generazione.<br><small style="color:#9ca3af;">' + msg + '</small>';
+                    }
+                }
+                if (errDiv) errDiv.style.display = 'block';
+                console.error('fetchProposal error:', error);
             } finally {
-                loader.style.display = 'none';
-                btnRegen.disabled = false;
+                _stopLoaderSteps();
+                if (loader)   loader.style.display  = 'none';
+                if (btnRegen) btnRegen.disabled = false;
             }
         }
 
@@ -1532,6 +1649,14 @@
                 fetchProposal(activeCompanyId, true);
             }
         }
+
+        function retryProposal() {
+            if (activeCompanyId) {
+                fetchProposal(activeCompanyId, false);
+            }
+        }
+
+
 
         function copyProposal() {
             if (!currentProposal) return;
